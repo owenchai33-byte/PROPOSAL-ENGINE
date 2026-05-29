@@ -6,86 +6,120 @@
 <title>Proposal Generator — Mushi Space Design</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#111;background:#fff;}
-  .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:100;}
-  .brand{display:flex;align-items:center;gap:9px;}
-  .brand-icon{width:28px;height:28px;background:#111;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
-  .brand-name{font-weight:600;font-size:13px;}
-  .badge{font-size:10px;padding:3px 10px;border-radius:20px;background:#f5f5f5;color:#aaa;}
-  .layout{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 52px);}
-  .col-l{padding:16px 20px 40px;border-right:1px solid #eee;overflow-y:auto;max-height:calc(100vh - 52px);}
-  .col-r{padding:16px 20px;display:flex;flex-direction:column;max-height:calc(100vh - 52px);}
-  .sec-label{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;}
-  .sec-label:first-child{margin-top:0;}
-  .fg{margin-bottom:8px;}
-  .fg label{display:block;font-size:11px;color:#aaa;margin-bottom:3px;}
-  input,select,textarea{width:100%;padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:inherit;color:#111;background:#fff;outline:none;transition:border .15s;}
-  input:focus,select:focus,textarea:focus{border-color:#999;}
-  textarea{min-height:58px;resize:vertical;line-height:1.5;}
-  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
-  .chips{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
-  .chip{padding:6px 10px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;text-align:left;font-family:inherit;transition:all .1s;}
-  .chip.on{border:1.5px solid #111;background:#111;color:#fff;}
-  .tier-btn{padding:9px 6px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;text-align:center;font-family:inherit;background:#fff;color:#555;transition:all .1s;}
-  .tier-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
-  .tier-name{font-size:12px;font-weight:600;}
-  .tier-range{font-size:10px;opacity:.65;margin-top:1px;}
-  .sty-btn{padding:7px 5px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;font-family:inherit;transition:all .1s;}
-  .sty-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
-  .err{font-size:11px;color:#c0392b;background:#fdf0ee;border:1px solid #f5c0b8;border-radius:8px;padding:8px 12px;margin-top:8px;display:none;word-break:break-all;}
-  .btn-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px;}
-  .btn-primary{padding:11px;background:#111;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;}
-  .btn-primary:disabled{background:#999;cursor:not-allowed;}
-  .btn-primary:hover:not(:disabled){opacity:.85;}
-  .btn-outline{padding:11px 16px;background:#fff;color:#111;border:1.5px solid #111;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .1s;}
-  .btn-outline:disabled{color:#ccc;border-color:#eee;cursor:not-allowed;}
-  .btn-outline:hover:not(:disabled){background:#f5f5f5;}
-  .status-bar{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:11px;color:#bbb;}
-  .dot{width:7px;height:7px;border-radius:50%;background:#ddd;transition:background .3s;}
-  .dot.live{background:#22c55e;animation:pulse 1.8s infinite;}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-  .out-box{border:1px solid #eee;border-radius:12px;flex:1;overflow-y:auto;}
-  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:320px;gap:10px;color:#ddd;}
-  .empty svg{opacity:.4;}
-  .empty p{font-size:12px;color:#ccc;}
-  .skel-wrap{padding:20px;}
-  .skel{height:10px;background:#f0f0f0;border-radius:4px;margin-bottom:9px;animation:sh 1.5s ease-in-out infinite;}
-  @keyframes sh{0%,100%{opacity:.25}50%{opacity:.7}}
-  .pdoc{padding:20px;display:none;}
-  .pdoc.show{display:block;}
-  .pdoc h1{font-size:17px;font-weight:600;margin-bottom:3px;}
-  .pmeta{font-size:11px;color:#ccc;padding-bottom:11px;border-bottom:1px solid #eee;margin-bottom:14px;}
-  .psec{margin-bottom:13px;}
-  .pst{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin-bottom:7px;}
-  .pbody{font-size:12px;line-height:1.7;color:#333;}
-  .srow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px;}
-  .srow:last-child{border-bottom:none;}
-  .srow-check{color:#ccc;flex-shrink:0;margin-top:1px;}
-  .ptable{width:100%;border-collapse:collapse;font-size:12px;}
-  .ptable th{text-align:left;padding:5px 0;border-bottom:1px solid #eee;font-size:10px;color:#bbb;font-weight:600;}
-  .ptable th.r{text-align:right;}
-  .ptable th.c{text-align:center;}
-  .ptable td{padding:6px 0;border-bottom:1px solid #f5f5f5;}
-  .ptable td.r{text-align:right;}
-  .ptable td.c{text-align:center;color:#ccc;}
-  .ptable .tot td{font-weight:600;border-top:2px solid #111;border-bottom:none;padding-top:8px;font-size:13px;}
-  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  .tbox{padding:10px;border:1px solid #eee;border-radius:8px;}
-  .tbox-l{font-size:10px;color:#bbb;margin-bottom:2px;}
-  .tbox-v{font-size:12px;font-weight:600;}
-  .divider{height:1px;background:#f0f0f0;margin:12px 0;}
-  .footer-strip{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #eee;}
-  .footer-icon{width:26px;height:26px;background:#111;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
-  .inc-exc{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  .phase-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5;}
-  .phase-num{width:18px;height:18px;border-radius:50%;background:#f5f5f5;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
-  .pmt-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:11px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#111;background:#fff;}
+#pwOverlay{position:fixed;inset:0;background:#fff;z-index:999;display:flex;align-items:center;justify-content:center;}
+#pwBox{width:320px;text-align:center;}
+#pwBox .pw-logo{width:40px;height:40px;background:#111;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;margin:0 auto 16px;}
+#pwBox h2{font-size:16px;font-weight:600;margin-bottom:4px;}
+#pwBox p{font-size:12px;color:#aaa;margin-bottom:20px;}
+#pwInput{width:100%;padding:10px 14px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;margin-bottom:10px;text-align:center;letter-spacing:2px;}
+#pwInput:focus{border-color:#111;}
+#pwBtn{width:100%;padding:11px;background:#111;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+#pwBtn:hover{opacity:.85;}
+#pwErr{font-size:11px;color:#c0392b;margin-top:8px;display:none;}
+#app{display:none;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:100;}
+.brand{display:flex;align-items:center;gap:9px;}
+.brand-icon{width:28px;height:28px;background:#111;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+.brand-name{font-weight:600;font-size:13px;}
+.badge{font-size:10px;padding:3px 10px;border-radius:20px;background:#f5f5f5;color:#aaa;}
+.layout{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 52px);}
+.col-l{padding:16px 20px 40px;border-right:1px solid #eee;overflow-y:auto;max-height:calc(100vh - 52px);}
+.col-r{padding:16px 20px;display:flex;flex-direction:column;max-height:calc(100vh - 52px);}
+.sec-label{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;}
+.sec-label:first-child{margin-top:0;}
+.fg{margin-bottom:8px;}
+.fg label{display:block;font-size:11px;color:#aaa;margin-bottom:3px;}
+input,select,textarea{width:100%;padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:inherit;color:#111;background:#fff;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:#999;}
+textarea{min-height:58px;resize:vertical;line-height:1.5;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.chip{padding:6px 10px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;text-align:left;font-family:inherit;transition:all .1s;}
+.chip.on{border:1.5px solid #111;background:#111;color:#fff;}
+.tier-btn{padding:9px 6px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;text-align:center;font-family:inherit;background:#fff;color:#555;transition:all .1s;}
+.tier-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
+.tier-name{font-size:12px;font-weight:600;}
+.tier-range{font-size:10px;opacity:.65;margin-top:1px;}
+.sty-btn{padding:7px 5px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;font-family:inherit;transition:all .1s;}
+.sty-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
+.rates-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:8px 10px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;margin-bottom:6px;}
+.rates-toggle span{font-size:11px;color:#666;font-weight:500;}
+.rates-toggle .arrow{font-size:10px;color:#aaa;transition:transform .2s;}
+.rates-toggle.open .arrow{transform:rotate(180deg);}
+.rates-body{display:none;}
+.rates-body.open{display:block;}
+.rates-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.rate-row{display:flex;align-items:center;gap:6px;padding:5px 0;}
+.rate-row label{font-size:10px;color:#888;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rate-row input{width:90px;padding:5px 8px;font-size:11px;flex-shrink:0;}
+.rates-hint{font-size:10px;color:#bbb;margin-bottom:8px;line-height:1.5;}
+.rates-saved{font-size:10px;color:#22c55e;display:none;margin-top:4px;}
+.err{font-size:11px;color:#c0392b;background:#fdf0ee;border:1px solid #f5c0b8;border-radius:8px;padding:8px 12px;margin-top:8px;display:none;word-break:break-all;}
+.btn-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px;}
+.btn-primary{padding:11px;background:#111;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;}
+.btn-primary:disabled{background:#999;cursor:not-allowed;}
+.btn-primary:hover:not(:disabled){opacity:.85;}
+.btn-outline{padding:11px 16px;background:#fff;color:#111;border:1.5px solid #111;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .1s;}
+.btn-outline:disabled{color:#ccc;border-color:#eee;cursor:not-allowed;}
+.btn-outline:hover:not(:disabled){background:#f5f5f5;}
+.status-bar{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:11px;color:#bbb;}
+.dot{width:7px;height:7px;border-radius:50%;background:#ddd;transition:background .3s;}
+.dot.live{background:#22c55e;animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.out-box{border:1px solid #eee;border-radius:12px;flex:1;overflow-y:auto;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:320px;gap:10px;color:#ddd;}
+.empty p{font-size:12px;color:#ccc;}
+.skel-wrap{padding:20px;}
+.skel{height:10px;background:#f0f0f0;border-radius:4px;margin-bottom:9px;animation:sh 1.5s ease-in-out infinite;}
+@keyframes sh{0%,100%{opacity:.25}50%{opacity:.7}}
+.pdoc{padding:20px;display:none;}
+.pdoc.show{display:block;}
+.pdoc h1{font-size:17px;font-weight:600;margin-bottom:3px;}
+.pmeta{font-size:11px;color:#ccc;padding-bottom:11px;border-bottom:1px solid #eee;margin-bottom:14px;}
+.psec{margin-bottom:13px;}
+.pst{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin-bottom:7px;}
+.pbody{font-size:12px;line-height:1.7;color:#333;}
+.srow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px;}
+.srow:last-child{border-bottom:none;}
+.srow-check{color:#ccc;flex-shrink:0;margin-top:1px;}
+.ptable{width:100%;border-collapse:collapse;font-size:12px;}
+.ptable th{text-align:left;padding:5px 0;border-bottom:1px solid #eee;font-size:10px;color:#bbb;font-weight:600;}
+.ptable th.r{text-align:right;}
+.ptable th.c{text-align:center;}
+.ptable td{padding:6px 0;border-bottom:1px solid #f5f5f5;}
+.ptable td.r{text-align:right;}
+.ptable td.c{text-align:center;color:#ccc;}
+.ptable .tot td{font-weight:600;border-top:2px solid #111;border-bottom:none;padding-top:8px;font-size:13px;}
+.tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.tbox{padding:10px;border:1px solid #eee;border-radius:8px;}
+.tbox-l{font-size:10px;color:#bbb;margin-bottom:2px;}
+.tbox-v{font-size:12px;font-weight:600;}
+.divider{height:1px;background:#f0f0f0;margin:12px 0;}
+.footer-strip{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #eee;}
+.footer-icon{width:26px;height:26px;background:#111;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
+.inc-exc{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.phase-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5;}
+.phase-num{width:18px;height:18px;border-radius:50%;background:#f5f5f5;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
+.pmt-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:11px;}
 </style>
 </head>
 <body>
 
+<div id="pwOverlay">
+  <div id="pwBox">
+    <div class="pw-logo">M</div>
+    <h2>Proposal Generator</h2>
+    <p>Mushi Space Design — Internal Tool</p>
+    <input type="password" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPw()"/>
+    <button id="pwBtn" onclick="checkPw()">Enter</button>
+    <div id="pwErr">Wrong password. Try again.</div>
+  </div>
+</div>
+
+<div id="app">
 <div class="topbar">
   <div class="brand">
     <div class="brand-icon">M</div>
@@ -134,21 +168,38 @@
         </select>
       </div>
     </div>
+
     <div class="sec-label">Rooms in scope</div>
     <div class="chips" id="roomGrid"></div>
+
     <div class="sec-label">Scope of works</div>
     <div class="chips" id="worksGrid"></div>
+
+    <div class="sec-label">Your rates (optional)</div>
+    <div class="rates-hint">Set your standard prices per work type. Saved automatically. Leave blank to let AI estimate.</div>
+    <div class="rates-toggle" id="ratesToggle" onclick="toggleRates()">
+      <span>Set / edit your rates</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="rates-body" id="ratesBody">
+      <div class="rates-grid" id="ratesGrid"></div>
+      <div class="rates-saved" id="ratesSaved">✓ Rates saved</div>
+    </div>
+
     <div class="sec-label">Design style</div>
     <div class="g3" id="styleGrid"></div>
+
     <div class="sec-label">Package & budget</div>
     <div class="g3" id="tierGrid"></div>
     <div class="g2" style="margin-top:8px;">
       <div class="fg"><label>Client budget (RM)</label><input id="budget" placeholder="e.g. 80,000"/></div>
       <div class="fg"><label>Target move-in</label><input id="moveIn" placeholder="e.g. August 2026"/></div>
     </div>
+
     <div class="sec-label">Notes</div>
     <div class="fg"><label>Style preferences & special requests</label><textarea id="notes" placeholder="e.g. Light wood tones, pet-friendly, existing sofa to keep..."></textarea></div>
     <div class="fg"><label>Site conditions</label><textarea id="siteNotes" placeholder="e.g. Old unit, tiles to hack, false ceiling to remove..."></textarea></div>
+
     <div class="err" id="errMsg"></div>
     <div class="btn-row">
       <button class="btn-primary" id="genBtn" onclick="generate()">✦&nbsp; Generate Proposal</button>
@@ -161,7 +212,7 @@
       <div class="dot" id="dot"></div>
       <span id="statusTxt">Ready — fill in the form and generate</span>
     </div>
-    <div class="out-box" id="outBox">
+    <div class="out-box">
       <div class="empty" id="emptyState">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <p>Fill in the form and hit Generate</p>
@@ -172,91 +223,145 @@
         <div class="skel" style="width:66%;margin-bottom:14px;"></div>
         <div class="skel" style="width:28%"></div><div class="skel" style="width:91%"></div>
         <div class="skel" style="width:71%"></div><div class="skel" style="width:85%"></div>
-        <div class="skel" style="width:50%;margin-bottom:14px;"></div>
-        <div class="skel" style="width:28%"></div><div class="skel"></div><div class="skel" style="width:60%"></div>
       </div>
       <div class="pdoc" id="pdoc"></div>
     </div>
   </div>
 </div>
+</div>
 
 <script>
-const ROOMS = ["Living Room","Master Bedroom","Kitchen","Master Bathroom","Bedroom 2","Bedroom 3","Common Bathroom","Dining Area","Study / Office","Yard / Balcony","Store Room","Foyer / Entrance"];
-const WORKS = ["Interior Design & Concept","Custom Carpentry","Full Renovation Works","Electrical Works","Plumbing Works","Tiling & Flooring","Windows & Sliding Doors","Painting & Finishes","False Ceiling & Lighting","Feature Wall","Kitchen Cabinet & Countertop","Wardrobe & Storage"];
-const STYLES = ["Modern Minimalist","Japandi","Contemporary","Scandinavian","Industrial","Classic / Traditional"];
-const TIERS = [{label:"Essential",range:"RM 30k–60k",apiRange:"RM 30,000–RM 60,000"},{label:"Signature",range:"RM 60k–120k",apiRange:"RM 60,000–RM 120,000"},{label:"Prestige",range:"RM 120k+",apiRange:"RM 120,000+"}];
+const ROOMS=["Living Room","Master Bedroom","Kitchen","Master Bathroom","Bedroom 2","Bedroom 3","Common Bathroom","Dining Area","Study / Office","Yard / Balcony","Store Room","Foyer / Entrance"];
+const WORKS=["Interior Design & Concept","Custom Carpentry","Full Renovation Works","Electrical Works","Plumbing Works","Tiling & Flooring","Windows & Sliding Doors","Painting & Finishes","False Ceiling & Lighting","Feature Wall","Kitchen Cabinet & Countertop","Wardrobe & Storage"];
+const STYLES=["Modern Minimalist","Japandi","Contemporary","Scandinavian","Industrial","Classic / Traditional"];
+const TIERS=[{label:"Essential",range:"RM 30k–60k",apiRange:"RM 30,000–RM 60,000"},{label:"Signature",range:"RM 60k–120k",apiRange:"RM 60,000–RM 120,000"},{label:"Prestige",range:"RM 120k+",apiRange:"RM 120,000+"}];
 
-let selRooms=[], selWorks=[], selStyle="", selTier="Signature";
-let lastProposal=null, lastMeta=null;
+let selRooms=[],selWorks=[],selStyle="",selTier="Signature";
+let lastProposal=null,lastMeta=null;
 
-function makeChips(containerId, items, getArr, setArr) {
-  const c = document.getElementById(containerId);
-  items.forEach(item => {
-    const b = document.createElement("button");
-    b.className = "chip";
-    b.textContent = item;
-    b.onclick = () => {
-      const arr = getArr();
-      const idx = arr.indexOf(item);
+async function checkPw(){
+  const pw=document.getElementById("pwInput").value;
+  if(!pw) return;
+  const btn=document.getElementById("pwBtn");
+  btn.textContent="Checking...";btn.disabled=true;
+  try{
+    const r=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:pw})});
+    const d=await r.json();
+    if(d.ok){
+      sessionStorage.setItem("authed","1");
+      document.getElementById("pwOverlay").style.display="none";
+      document.getElementById("app").style.display="block";
+    } else {
+      document.getElementById("pwErr").style.display="block";
+      btn.textContent="Enter";btn.disabled=false;
+      document.getElementById("pwInput").value="";
+    }
+  } catch(e){
+    document.getElementById("pwErr").textContent="Error. Try again.";
+    document.getElementById("pwErr").style.display="block";
+    btn.textContent="Enter";btn.disabled=false;
+  }
+}
+
+if(sessionStorage.getItem("authed")==="1"){
+  document.getElementById("pwOverlay").style.display="none";
+  document.getElementById("app").style.display="block";
+}
+
+function makeChips(id,items,getArr,setArr){
+  const c=document.getElementById(id);
+  items.forEach(item=>{
+    const b=document.createElement("button");
+    b.className="chip";b.textContent=item;
+    b.onclick=()=>{
+      const arr=getArr(),idx=arr.indexOf(item);
       if(idx>-1) setArr(arr.filter(x=>x!==item));
-      else setArr([...arr, item]);
-      b.classList.toggle("on", getArr().includes(item));
+      else setArr([...arr,item]);
+      b.classList.toggle("on",getArr().includes(item));
     };
     c.appendChild(b);
   });
 }
+makeChips("roomGrid",ROOMS,()=>selRooms,v=>selRooms=v);
+makeChips("worksGrid",WORKS,()=>selWorks,v=>selWorks=v);
 
-makeChips("roomGrid", ROOMS, ()=>selRooms, v=>selRooms=v);
-makeChips("worksGrid", WORKS, ()=>selWorks, v=>selWorks=v);
-
-STYLES.forEach(s => {
-  const b = document.createElement("button");
-  b.className = "sty-btn"; b.textContent = s;
-  b.onclick = () => { selStyle = s; document.querySelectorAll(".sty-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+STYLES.forEach(s=>{
+  const b=document.createElement("button");
+  b.className="sty-btn";b.textContent=s;
+  b.onclick=()=>{selStyle=s;document.querySelectorAll(".sty-btn").forEach(x=>x.classList.remove("on"));b.classList.add("on");};
   document.getElementById("styleGrid").appendChild(b);
 });
-
-TIERS.forEach(t => {
-  const b = document.createElement("button");
-  b.className = "tier-btn" + (t.label==="Signature"?" on":"");
-  b.innerHTML = `<div class="tier-name">${t.label}</div><div class="tier-range">${t.range}</div>`;
-  b.onclick = () => { selTier = t.label; document.querySelectorAll(".tier-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+TIERS.forEach(t=>{
+  const b=document.createElement("button");
+  b.className="tier-btn"+(t.label==="Signature"?" on":"");
+  b.innerHTML=`<div class="tier-name">${t.label}</div><div class="tier-range">${t.range}</div>`;
+  b.onclick=()=>{selTier=t.label;document.querySelectorAll(".tier-btn").forEach(x=>x.classList.remove("on"));b.classList.add("on");};
   document.getElementById("tierGrid").appendChild(b);
 });
 
-function showErr(msg) { const e=document.getElementById("errMsg"); e.textContent=msg; e.style.display="block"; }
-function hideErr() { document.getElementById("errMsg").style.display="none"; }
-function setStatus(state) {
-  const dot=document.getElementById("dot"), txt=document.getElementById("statusTxt");
-  dot.className = "dot" + (state==="loading"?" live":"");
-  txt.textContent = state==="idle"?"Ready — fill in the form and generate":state==="loading"?"Generating your proposal...":state==="done"?"Ready to send":"Generation failed — check error";
+const savedRates=JSON.parse(localStorage.getItem("mushiRates")||"{}");
+const rGrid=document.getElementById("ratesGrid");
+WORKS.forEach(w=>{
+  const row=document.createElement("div");
+  row.className="rate-row";
+  row.innerHTML=`<label title="${w}">${w}</label><input type="number" min="0" placeholder="RM" data-work="${w}" value="${savedRates[w]||""}"/>`;
+  rGrid.appendChild(row);
+});
+document.querySelectorAll(".rate-row input").forEach(inp=>{
+  inp.addEventListener("input",()=>{
+    const rates={};
+    document.querySelectorAll(".rate-row input").forEach(i=>{if(i.value) rates[i.dataset.work]=i.value;});
+    localStorage.setItem("mushiRates",JSON.stringify(rates));
+    const saved=document.getElementById("ratesSaved");
+    saved.style.display="block";
+    setTimeout(()=>saved.style.display="none",1500);
+  });
+});
+
+function toggleRates(){
+  const t=document.getElementById("ratesToggle"),b=document.getElementById("ratesBody");
+  t.classList.toggle("open");b.classList.toggle("open");
 }
 
-async function generate() {
+function getCustomPrices(){
+  const rates={};
+  document.querySelectorAll(".rate-row input").forEach(i=>{if(i.value) rates[i.dataset.work]=i.value;});
+  return rates;
+}
+
+function showErr(m){const e=document.getElementById("errMsg");e.textContent=m;e.style.display="block";}
+function hideErr(){document.getElementById("errMsg").style.display="none";}
+function setStatus(s){
+  const dot=document.getElementById("dot"),txt=document.getElementById("statusTxt");
+  dot.className="dot"+(s==="loading"?" live":"");
+  txt.textContent=s==="idle"?"Ready — fill in the form and generate":s==="loading"?"Generating your proposal...":s==="done"?"Ready to send":"Generation failed — check error";
+}
+
+async function generate(){
   hideErr();
   const clientName=document.getElementById("clientName").value.trim();
   const propType=document.getElementById("propType").value;
-  if(!clientName||!propType||selRooms.length===0||selWorks.length===0) {
-    showErr("Please enter client name, property type, and select at least one room and scope of work."); return;
+  if(!clientName||!propType||selRooms.length===0||selWorks.length===0){
+    showErr("Please enter client name, property type, and select at least one room and scope of work.");return;
   }
-  const genBtn=document.getElementById("genBtn"), pdfBtn=document.getElementById("pdfBtn");
-  genBtn.disabled=true; genBtn.textContent="Generating..."; pdfBtn.disabled=true;
+  const genBtn=document.getElementById("genBtn"),pdfBtn=document.getElementById("pdfBtn");
+  genBtn.disabled=true;genBtn.textContent="Generating...";pdfBtn.disabled=true;
   document.getElementById("emptyState").style.display="none";
   document.getElementById("pdoc").classList.remove("show");
   document.getElementById("skelLines").style.display="block";
   setStatus("loading");
-  const tierObj = TIERS.find(t=>t.label===selTier)||TIERS[1];
-  const meta = {
-    clientName, clientPhone:document.getElementById("clientPhone").value.trim(),
+  const tierObj=TIERS.find(t=>t.label===selTier)||TIERS[1];
+  const meta={
+    clientName,clientPhone:document.getElementById("clientPhone").value.trim(),
     address:document.getElementById("address").value.trim()||"Kuching, Sarawak",
-    propType, propSize:document.getElementById("propSize").value.trim(),
-    selStyle, selTier,
+    propType,propSize:document.getElementById("propSize").value.trim(),
+    selStyle,selTier,
   };
-  try {
-    const res = await fetch("/api/generate", {
+  try{
+    const res=await fetch("/api/generate",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({
+      body:JSON.stringify({
         ...meta,
         occupants:document.getElementById("occupants").value,
         priority:document.getElementById("priority").value,
@@ -264,37 +369,37 @@ async function generate() {
         moveIn:document.getElementById("moveIn").value.trim(),
         notes:document.getElementById("notes").value.trim(),
         siteNotes:document.getElementById("siteNotes").value.trim(),
-        selRooms, selWorks, tierRange:tierObj.apiRange,
+        selRooms,selWorks,tierRange:tierObj.apiRange,
+        customPrices:getCustomPrices(),
       }),
     });
-    const data = await res.json();
+    const data=await res.json();
     if(data.error) throw new Error(data.error);
-    lastProposal = data.proposal;
-    lastMeta = meta;
-    renderProposal(data.proposal, meta);
+    lastProposal=data.proposal;lastMeta=meta;
+    renderProposal(data.proposal,meta);
     document.getElementById("skelLines").style.display="none";
     document.getElementById("pdoc").classList.add("show");
     setStatus("done");
     pdfBtn.disabled=false;
-  } catch(e) {
+  } catch(e){
     document.getElementById("skelLines").style.display="none";
     document.getElementById("emptyState").style.display="flex";
     showErr("Error: "+e.message);
     setStatus("error");
   }
-  genBtn.disabled=false; genBtn.textContent="✦  Regenerate";
+  genBtn.disabled=false;genBtn.textContent="✦  Regenerate";
 }
 
-function renderProposal(p, m) {
-  const today = new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
-  const d = document.getElementById("pdoc");
-  const scopeHTML = (p.scopeItems||[]).map(s=>`<div class="srow"><span class="srow-check">✓</span><div><strong style="font-size:11px;">${s.room}</strong><br><span style="color:#999;font-size:11px;">${s.works}</span></div></div>`).join("");
-  const inclHTML = (p.inclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#444;">✓ ${x}</div>`).join("");
-  const exclHTML = (p.exclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#ccc;">✕ ${x}</div>`).join("");
-  const lineHTML = (p.lineItems||[]).map((l,i)=>`<tr style="background:${i%2===0?"#fafafa":"#fff"}"><td>${l.item}</td><td class="c">${l.qty} ${l.unit}</td><td class="r">${l.amount}</td></tr>`).join("");
-  const phaseHTML = (p.phases||[]).map((ph,i)=>`<div class="phase-row"><div class="phase-num">${i+1}</div><div><div style="font-size:11px;font-weight:600;">${ph.phase} <span style="color:#bbb;font-weight:400;">(${ph.duration})</span></div><div style="font-size:11px;color:#999;margin-top:2px;">${ph.description}</div></div></div>`).join("");
-  const pmtHTML = (p.paymentSchedule||[]).map(pm=>`<div class="pmt-row"><span>${pm.milestone}</span><span style="color:#bbb;">${pm.pct}</span><span style="font-weight:600;">${pm.amount}</span></div>`).join("");
-  d.innerHTML = `
+function renderProposal(p,m){
+  const today=new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
+  const d=document.getElementById("pdoc");
+  const scopeHTML=(p.scopeItems||[]).map(s=>`<div class="srow"><span class="srow-check">✓</span><div><strong style="font-size:11px;">${s.room}</strong><br><span style="color:#999;font-size:11px;">${s.works}</span></div></div>`).join("");
+  const inclHTML=(p.inclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#444;">✓ ${x}</div>`).join("");
+  const exclHTML=(p.exclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#ccc;">✕ ${x}</div>`).join("");
+  const lineHTML=(p.lineItems||[]).map((l,i)=>`<tr style="background:${i%2===0?"#fafafa":"#fff"}"><td>${l.item}</td><td class="c">${l.qty} ${l.unit}</td><td class="r">${l.amount}</td></tr>`).join("");
+  const phaseHTML=(p.phases||[]).map((ph,i)=>`<div class="phase-row"><div class="phase-num">${i+1}</div><div><div style="font-size:11px;font-weight:600;">${ph.phase} <span style="color:#bbb;font-weight:400;">(${ph.duration})</span></div><div style="font-size:11px;color:#999;margin-top:2px;">${ph.description}</div></div></div>`).join("");
+  const pmtHTML=(p.paymentSchedule||[]).map(pm=>`<div class="pmt-row"><span>${pm.milestone}</span><span style="color:#bbb;">${pm.pct}</span><span style="font-weight:600;">${pm.amount}</span></div>`).join("");
+  d.innerHTML=`
     <h1>Design &amp; Renovation Proposal</h1>
     <div style="font-size:10px;color:#bbb;margin-bottom:2px;">For: <strong style="color:#111;">${m.clientName}</strong>${m.clientPhone?" · "+m.clientPhone:""}</div>
     <div class="pmeta">${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""} · ${m.address} · ${today}${p.refNo?" · "+p.refNo:""}</div>
@@ -338,10 +443,10 @@ function renderProposal(p, m) {
     </div>`;
 }
 
-function exportPDF() {
+function exportPDF(){
   if(!lastProposal||!window.jspdf) return;
-  const {jsPDF} = window.jspdf;
-  const p=lastProposal, m=lastMeta;
+  const {jsPDF}=window.jspdf;
+  const p=lastProposal,m=lastMeta;
   const today=new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
   const doc=new jsPDF({unit:"mm",format:"a4"});
   const W=210,L=14,R=14,CW=W-L-R;
@@ -349,25 +454,19 @@ function exportPDF() {
   const hr=(c=[220,220,220])=>{doc.setDrawColor(...c);doc.setLineWidth(0.2);doc.line(L,y,W-R,y);};
   const ST=t=>{y+=5;doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);doc.text(t.toUpperCase(),L,y);y+=2.5;hr();y+=3;};
   const BD=(t,col=[50,50,50],sz=8)=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);const ls=doc.splitTextToSize(t,CW);doc.text(ls,L,y);y+=ls.length*4.2+0.5;};
-
   doc.setFillColor(15,15,15);doc.rect(0,0,W,22,"F");
   doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("MUSHI SPACE DESIGN SDN BHD",L,10);
   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
   doc.text("Space  •  Style  •  Living",L,16);
   doc.text("019-283 8686  ·  @mushispacedesign",W-R,10,{align:"right"});
   doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  ${today}  ·  Valid: ${p.validity}`,W-R,16,{align:"right"});
-
   y=30;
   doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(15,15,15);doc.text("Design & Renovation Proposal",L,y);y+=5;
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(80,80,80);
   doc.text(`${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}  ·  ${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`,L,y);y+=2;
   hr([200,200,200]);y+=1;
-
   ST("Overview");
-  BD(p.intro);y+=1;
-  BD(p.understanding,[80,80,80]);y+=1;
-  BD(p.approach,[80,80,80]);
-
+  BD(p.intro);y+=1;BD(p.understanding,[80,80,80]);y+=1;BD(p.approach,[80,80,80]);
   ST("Scope of Works");
   (p.scopeItems||[]).forEach((s,i)=>{
     doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(20,20,20);doc.text(s.room,L,y);y+=3.5;
@@ -375,22 +474,17 @@ function exportPDF() {
     y+=wl.length*4+2;
     if(i<(p.scopeItems.length-1)){hr([240,240,240]);y+=2;}
   });
-
   ST("Estimated Investment  &  Payment Schedule");
   const halfCW=(CW-6)/2;
   const tableStartY=y;
-
   doc.setFillColor(245,245,245);doc.rect(L,y-1,halfCW,5.5,"F");
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
-  doc.text("Item",L+1,y+3);doc.text("Amount",L+halfCW-1,y+3,{align:"right"});
-  y+=7;
+  doc.text("Item",L+1,y+3);doc.text("Amount",L+halfCW-1,y+3,{align:"right"});y+=7;
   (p.lineItems||[]).forEach((l,i)=>{
     if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-1,halfCW,5.5,"F");}
     doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
-    const itemTxt=doc.splitTextToSize(l.item,halfCW-20);
-    doc.text(itemTxt[0],L+1,y+3);
-    doc.text(l.amount,L+halfCW-1,y+3,{align:"right"});
-    y+=5.5;
+    const t=doc.splitTextToSize(l.item,halfCW-20);
+    doc.text(t[0],L+1,y+3);doc.text(l.amount,L+halfCW-1,y+3,{align:"right"});y+=5.5;
   });
   y+=1;doc.setDrawColor(160,160,160);doc.setLineWidth(0.3);doc.line(L,y,L+halfCW,y);y+=3.5;
   doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);
@@ -400,23 +494,19 @@ function exportPDF() {
   doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(15,15,15);
   doc.text("Total",L+1,y);doc.text(p.total,L+halfCW-1,y,{align:"right"});
   const leftEndY=y+4;
-
   let ry=tableStartY;
-  const rx=L+halfCW+6;
-  const rw=halfCW;
-
+  const rx=L+halfCW+6,rw=halfCW;
   doc.setFillColor(245,245,245);doc.rect(rx,ry-1,rw,5.5,"F");
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
   doc.text("Payment Milestone",rx+1,ry+3);doc.text("Amount",rx+rw-1,ry+3,{align:"right"});ry+=7;
   (p.paymentSchedule||[]).forEach((pm,i)=>{
     if(i%2===0){doc.setFillColor(251,251,251);doc.rect(rx,ry-1,rw,5.5,"F");}
     doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
-    doc.text(`${pm.milestone} (${pm.pct})`,rx+1,ry+3);
-    doc.text(pm.amount,rx+rw-1,ry+3,{align:"right"});ry+=5.5;
+    doc.text(`${pm.milestone} (${pm.pct})`,rx+1,ry+3);doc.text(pm.amount,rx+rw-1,ry+3,{align:"right"});ry+=5.5;
   });
   ry+=3;
-
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(160,160,160);doc.text(`TIMELINE — ${p.timeline}`.toUpperCase(),rx,ry);ry+=2.5;
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(160,160,160);
+  doc.text(`TIMELINE — ${p.timeline}`.toUpperCase(),rx,ry);ry+=2.5;
   doc.setDrawColor(220,220,220);doc.setLineWidth(0.2);doc.line(rx,ry,rx+rw,ry);ry+=3;
   (p.phases||[]).forEach((ph,i)=>{
     doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);
@@ -424,30 +514,53 @@ function exportPDF() {
     doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(140,140,140);doc.text(ph.duration,rx+rw-1,ry,{align:"right"});ry+=3.5;
     const dl=doc.splitTextToSize(ph.description,rw-2);doc.setFontSize(7);doc.setTextColor(110,110,110);doc.text(dl,rx+1,ry);ry+=dl.length*3.5+2;
   });
-
   y=Math.max(leftEndY,ry)+3;
-
   ST("Inclusions & Exclusions");
-  const iex_halfCW=(CW-6)/2;
+  const iex=(CW-6)/2;
   let iy=y,ey=y;
   doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("INCLUDED",L,iy);iy+=3;
   (p.inclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(50,50,50);doc.text("+ "+x,L,iy);iy+=4;});
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("NOT INCLUDED",L+iex_halfCW+6,ey);ey+=3;
-  (p.exclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(150,150,150);doc.text("- "+x,L+iex_halfCW+6,ey);ey+=4;});
-  y=Math.max(iy,ey)+3;
-
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("NOT INCLUDED",L+iex+6,ey);ey+=3;
+  (p.exclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(150,150,150);doc.text("- "+x,L+iex+6,ey);ey+=4;});
+  y=Math.max(iy,ey)+4;
   hr([200,200,200]);y+=4;
   doc.setFont("helvetica","italic");doc.setFontSize(7.5);doc.setTextColor(120,120,120);
-  const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*4+4;
-
+  const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*4+3;
   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);
   doc.text(`Warranty: ${p.warranty}  ·  Style: ${m.selStyle||"TBC"}  ·  Package: ${m.selTier}`,L,y);y+=8;
-
+  hr([200,200,200]);y+=5;
+  doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);
+  doc.text("ACCEPTANCE & AUTHORIZATION",L,y);y+=6;
+  const sigW=(CW-10)/2;
+  doc.setFillColor(250,250,250);doc.rect(L,y,sigW,32,"F");
+  doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(L,y,sigW,32,"S");
+  doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);
+  doc.text("Accepted by Client",L+3,y+6);
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
+  doc.line(L+3,y+18,L+sigW-3,y+18);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);
+  doc.text("Signature",L+3,y+21);
+  doc.line(L+3,y+26,L+sigW-3,y+26);
+  doc.text("Full Name / I/C No.",L+3,y+29);
+  const rx2=L+sigW+10;
+  doc.setFillColor(250,250,250);doc.rect(rx2,y,sigW,32,"F");
+  doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(rx2,y,sigW,32,"S");
+  doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);
+  doc.text("Authorized by Mushi Space Design",rx2+3,y+6);
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
+  doc.line(rx2+3,y+18,rx2+sigW-3,y+18);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);
+  doc.text("Signature & Company Stamp",rx2+3,y+21);
+  doc.line(rx2+3,y+26,rx2+sigW-3,y+26);
+  doc.text("Name / Designation",rx2+3,y+29);
+  y+=32;y+=4;
+  doc.text("Date: ___________________",L+3,y);
+  doc.text("Date: ___________________",rx2+3,y);
+  y+=8;
   doc.setFillColor(15,15,15);doc.rect(0,y,W,14,"F");
   doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text("Mushi Space Design Sdn Bhd",L,y+6);
   doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
   doc.text("Space • Style • Living  ·  019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,y+11);
-
   doc.save(`Mushi_Proposal_${m.clientName.replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 </script>
