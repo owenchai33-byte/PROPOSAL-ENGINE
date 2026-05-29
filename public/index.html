@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Proposal Generator — Mushi Space Design</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;color:#111;background:#fff;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:100;}
+  .brand{display:flex;align-items:center;gap:9px;}
+  .brand-icon{width:28px;height:28px;background:#111;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;}
+  .brand-name{font-weight:600;font-size:13px;}
+  .badge{font-size:10px;padding:3px 10px;border-radius:20px;background:#f5f5f5;color:#aaa;}
+  .layout{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 52px);}
+  .col-l{padding:16px 20px 40px;border-right:1px solid #eee;overflow-y:auto;max-height:calc(100vh - 52px);}
+  .col-r{padding:16px 20px;display:flex;flex-direction:column;max-height:calc(100vh - 52px);}
+  .sec-label{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;}
+  .sec-label:first-child{margin-top:0;}
+  .fg{margin-bottom:8px;}
+  .fg label{display:block;font-size:11px;color:#aaa;margin-bottom:3px;}
+  input,select,textarea{width:100%;padding:7px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:inherit;color:#111;background:#fff;outline:none;transition:border .15s;}
+  input:focus,select:focus,textarea:focus{border-color:#999;}
+  textarea{min-height:58px;resize:vertical;line-height:1.5;}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  .chips{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+  .chip{padding:6px 10px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;text-align:left;font-family:inherit;transition:all .1s;}
+  .chip.on{border:1.5px solid #111;background:#111;color:#fff;}
+  .tier-btn{padding:9px 6px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;text-align:center;font-family:inherit;background:#fff;color:#555;transition:all .1s;}
+  .tier-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
+  .tier-name{font-size:12px;font-weight:600;}
+  .tier-range{font-size:10px;opacity:.65;margin-top:1px;}
+  .sty-btn{padding:7px 5px;border:1px solid #e0e0e0;border-radius:8px;cursor:pointer;font-size:11px;color:#666;background:#fff;font-family:inherit;transition:all .1s;}
+  .sty-btn.on{border:1.5px solid #111;background:#111;color:#fff;}
+  .err{font-size:11px;color:#c0392b;background:#fdf0ee;border:1px solid #f5c0b8;border-radius:8px;padding:8px 12px;margin-top:8px;display:none;word-break:break-all;}
+  .btn-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:14px;}
+  .btn-primary{padding:11px;background:#111;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:opacity .15s;}
+  .btn-primary:disabled{background:#999;cursor:not-allowed;}
+  .btn-primary:hover:not(:disabled){opacity:.85;}
+  .btn-outline{padding:11px 16px;background:#fff;color:#111;border:1.5px solid #111;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .1s;}
+  .btn-outline:disabled{color:#ccc;border-color:#eee;cursor:not-allowed;}
+  .btn-outline:hover:not(:disabled){background:#f5f5f5;}
+  .status-bar{display:flex;align-items:center;gap:7px;margin-bottom:12px;font-size:11px;color:#bbb;}
+  .dot{width:7px;height:7px;border-radius:50%;background:#ddd;transition:background .3s;}
+  .dot.live{background:#22c55e;animation:pulse 1.8s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .out-box{border:1px solid #eee;border-radius:12px;flex:1;overflow-y:auto;}
+  .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:320px;gap:10px;color:#ddd;}
+  .empty svg{opacity:.4;}
+  .empty p{font-size:12px;color:#ccc;}
+  .skel-wrap{padding:20px;}
+  .skel{height:10px;background:#f0f0f0;border-radius:4px;margin-bottom:9px;animation:sh 1.5s ease-in-out infinite;}
+  @keyframes sh{0%,100%{opacity:.25}50%{opacity:.7}}
+  .pdoc{padding:20px;display:none;}
+  .pdoc.show{display:block;}
+  .pdoc h1{font-size:17px;font-weight:600;margin-bottom:3px;}
+  .pmeta{font-size:11px;color:#ccc;padding-bottom:11px;border-bottom:1px solid #eee;margin-bottom:14px;}
+  .psec{margin-bottom:13px;}
+  .pst{font-size:9px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#bbb;margin-bottom:7px;}
+  .pbody{font-size:12px;line-height:1.7;color:#333;}
+  .srow{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5;font-size:12px;}
+  .srow:last-child{border-bottom:none;}
+  .srow-check{color:#ccc;flex-shrink:0;margin-top:1px;}
+  .ptable{width:100%;border-collapse:collapse;font-size:12px;}
+  .ptable th{text-align:left;padding:5px 0;border-bottom:1px solid #eee;font-size:10px;color:#bbb;font-weight:600;}
+  .ptable th.r{text-align:right;}
+  .ptable th.c{text-align:center;}
+  .ptable td{padding:6px 0;border-bottom:1px solid #f5f5f5;}
+  .ptable td.r{text-align:right;}
+  .ptable td.c{text-align:center;color:#ccc;}
+  .ptable .tot td{font-weight:600;border-top:2px solid #111;border-bottom:none;padding-top:8px;font-size:13px;}
+  .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .tbox{padding:10px;border:1px solid #eee;border-radius:8px;}
+  .tbox-l{font-size:10px;color:#bbb;margin-bottom:2px;}
+  .tbox-v{font-size:12px;font-weight:600;}
+  .divider{height:1px;background:#f0f0f0;margin:12px 0;}
+  .footer-strip{display:flex;align-items:center;gap:9px;margin-top:16px;padding-top:14px;border-top:1px solid #eee;}
+  .footer-icon{width:26px;height:26px;background:#111;border-radius:5px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;flex-shrink:0;}
+  .inc-exc{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .phase-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f5f5f5;}
+  .phase-num{width:18px;height:18px;border-radius:50%;background:#f5f5f5;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
+  .pmt-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:11px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">M</div>
+    <span class="brand-name">Proposal Generator</span>
+  </div>
+  <span class="badge">Mushi Space Design</span>
+</div>
+
+<div class="layout">
+  <!-- LEFT FORM -->
+  <div class="col-l">
+
+    <div class="sec-label">Client information</div>
+    <div class="g2">
+      <div class="fg"><label>Client name</label><input id="clientName" placeholder="Mr. & Mrs. Tan"/></div>
+      <div class="fg"><label>Phone</label><input id="clientPhone" placeholder="01X-XXX XXXX"/></div>
+    </div>
+    <div class="fg"><label>Project address</label><input id="address" placeholder="Lot 12, Jalan Samariang, Kuching"/></div>
+    <div class="g2">
+      <div class="fg"><label>Property type</label>
+        <select id="propType">
+          <option value="">Select...</option>
+          <option>Apartment / Condominium</option>
+          <option>Terrace House</option>
+          <option>Semi-D / Bungalow</option>
+          <option>Commercial Office</option>
+          <option>Retail / Shop</option>
+          <option>Café / Restaurant</option>
+        </select>
+      </div>
+      <div class="fg"><label>Size (sq ft)</label><input id="propSize" placeholder="e.g. 1200"/></div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label>Occupants</label>
+        <select id="occupants">
+          <option value="">Select...</option>
+          <option>Single</option><option>Couple</option>
+          <option>Family (no kids)</option><option>Family with young children</option>
+          <option>Family with elderly</option><option>Commercial use</option>
+        </select>
+      </div>
+      <div class="fg"><label>Priority</label>
+        <select id="priority">
+          <option value="">Select...</option>
+          <option>Aesthetics first</option><option>Functionality first</option>
+          <option>Budget-conscious</option><option>Premium quality</option>
+          <option>Fast turnaround</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec-label">Rooms in scope</div>
+    <div class="chips" id="roomGrid"></div>
+
+    <div class="sec-label">Scope of works</div>
+    <div class="chips" id="worksGrid"></div>
+
+    <div class="sec-label">Design style</div>
+    <div class="g3" id="styleGrid"></div>
+
+    <div class="sec-label">Package & budget</div>
+    <div class="g3" id="tierGrid"></div>
+    <div class="g2" style="margin-top:8px;">
+      <div class="fg"><label>Client budget (RM)</label><input id="budget" placeholder="e.g. 80,000"/></div>
+      <div class="fg"><label>Target move-in</label><input id="moveIn" placeholder="e.g. August 2026"/></div>
+    </div>
+
+    <div class="sec-label">Notes</div>
+    <div class="fg"><label>Style preferences & special requests</label><textarea id="notes" placeholder="e.g. Light wood tones, pet-friendly, existing sofa to keep..."></textarea></div>
+    <div class="fg"><label>Site conditions</label><textarea id="siteNotes" placeholder="e.g. Old unit, tiles to hack, false ceiling to remove..."></textarea></div>
+
+    <div class="err" id="errMsg"></div>
+    <div class="btn-row">
+      <button class="btn-primary" id="genBtn" onclick="generate()">✦&nbsp; Generate Proposal</button>
+      <button class="btn-outline" id="pdfBtn" onclick="exportPDF()" disabled>↓ PDF</button>
+    </div>
+  </div>
+
+  <!-- RIGHT OUTPUT -->
+  <div class="col-r">
+    <div class="status-bar">
+      <div class="dot" id="dot"></div>
+      <span id="statusTxt">Ready — fill in the form and generate</span>
+    </div>
+    <div class="out-box" id="outBox">
+      <div class="empty" id="emptyState">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <p>Fill in the form and hit Generate</p>
+      </div>
+      <div class="skel-wrap" id="skelLines" style="display:none;">
+        <div class="skel" style="width:55%"></div><div class="skel" style="width:35%;margin-bottom:16px;"></div>
+        <div class="skel" style="width:28%"></div><div class="skel"></div><div class="skel" style="width:82%"></div>
+        <div class="skel" style="width:66%;margin-bottom:14px;"></div>
+        <div class="skel" style="width:28%"></div><div class="skel" style="width:91%"></div>
+        <div class="skel" style="width:71%"></div><div class="skel" style="width:85%"></div>
+        <div class="skel" style="width:50%;margin-bottom:14px;"></div>
+        <div class="skel" style="width:28%"></div><div class="skel"></div><div class="skel" style="width:60%"></div>
+      </div>
+      <div class="pdoc" id="pdoc"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROOMS = ["Living Room","Master Bedroom","Kitchen","Master Bathroom","Bedroom 2","Bedroom 3","Common Bathroom","Dining Area","Study / Office","Yard / Balcony","Store Room","Foyer / Entrance"];
+const WORKS = ["Interior Design & Concept","Custom Carpentry","Full Renovation Works","Electrical Works","Plumbing Works","Tiling & Flooring","Windows & Sliding Doors","Painting & Finishes","False Ceiling & Lighting","Feature Wall","Kitchen Cabinet & Countertop","Wardrobe & Storage"];
+const STYLES = ["Modern Minimalist","Japandi","Contemporary","Scandinavian","Industrial","Classic / Traditional"];
+const TIERS = [{label:"Essential",range:"RM 30k–60k",apiRange:"RM 30,000–RM 60,000"},{label:"Signature",range:"RM 60k–120k",apiRange:"RM 60,000–RM 120,000"},{label:"Prestige",range:"RM 120k+",apiRange:"RM 120,000+"}];
+
+let selRooms=[], selWorks=[], selStyle="", selTier="Signature";
+let lastProposal=null, lastMeta=null;
+
+function makeChips(containerId, items, getArr, setArr) {
+  const c = document.getElementById(containerId);
+  items.forEach(item => {
+    const b = document.createElement("button");
+    b.className = "chip";
+    b.textContent = item;
+    b.onclick = () => {
+      const arr = getArr();
+      const idx = arr.indexOf(item);
+      if(idx>-1) setArr(arr.filter(x=>x!==item));
+      else setArr([...arr, item]);
+      b.classList.toggle("on", getArr().includes(item));
+    };
+    c.appendChild(b);
+  });
+}
+
+makeChips("roomGrid", ROOMS, ()=>selRooms, v=>selRooms=v);
+makeChips("worksGrid", WORKS, ()=>selWorks, v=>selWorks=v);
+
+STYLES.forEach(s => {
+  const b = document.createElement("button");
+  b.className = "sty-btn"; b.textContent = s;
+  b.onclick = () => { selStyle = s; document.querySelectorAll(".sty-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+  document.getElementById("styleGrid").appendChild(b);
+});
+
+TIERS.forEach(t => {
+  const b = document.createElement("button");
+  b.className = "tier-btn" + (t.label==="Signature"?" on":"");
+  b.innerHTML = `<div class="tier-name">${t.label}</div><div class="tier-range">${t.range}</div>`;
+  b.onclick = () => { selTier = t.label; document.querySelectorAll(".tier-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); };
+  document.getElementById("tierGrid").appendChild(b);
+});
+
+function showErr(msg) { const e=document.getElementById("errMsg"); e.textContent=msg; e.style.display="block"; }
+function hideErr() { document.getElementById("errMsg").style.display="none"; }
+function setStatus(state) {
+  const dot=document.getElementById("dot"), txt=document.getElementById("statusTxt");
+  dot.className = "dot" + (state==="loading"?" live":"");
+  txt.textContent = state==="idle"?"Ready — fill in the form and generate":state==="loading"?"Claude is writing your proposal...":state==="done"?"Ready to send":"Generation failed — check error";
+}
+
+async function generate() {
+  hideErr();
+  const clientName=document.getElementById("clientName").value.trim();
+  const propType=document.getElementById("propType").value;
+  if(!clientName||!propType||selRooms.length===0||selWorks.length===0) {
+    showErr("Please enter client name, property type, and select at least one room and scope of work."); return;
+  }
+
+  const genBtn=document.getElementById("genBtn"), pdfBtn=document.getElementById("pdfBtn");
+  genBtn.disabled=true; genBtn.textContent="Generating..."; pdfBtn.disabled=true;
+  document.getElementById("emptyState").style.display="none";
+  document.getElementById("pdoc").classList.remove("show");
+  document.getElementById("skelLines").style.display="block";
+  setStatus("loading");
+
+  const tierObj = TIERS.find(t=>t.label===selTier)||TIERS[1];
+  const meta = {
+    clientName, clientPhone:document.getElementById("clientPhone").value.trim(),
+    address:document.getElementById("address").value.trim()||"Kuching, Sarawak",
+    propType, propSize:document.getElementById("propSize").value.trim(),
+    selStyle, selTier,
+  };
+
+  try {
+    const res = await fetch("/api/generate", {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({
+        ...meta,
+        occupants:document.getElementById("occupants").value,
+        priority:document.getElementById("priority").value,
+        budget:document.getElementById("budget").value.trim(),
+        moveIn:document.getElementById("moveIn").value.trim(),
+        notes:document.getElementById("notes").value.trim(),
+        siteNotes:document.getElementById("siteNotes").value.trim(),
+        selRooms, selWorks, tierRange:tierObj.apiRange,
+      }),
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    lastProposal = data.proposal;
+    lastMeta = meta;
+    renderProposal(data.proposal, meta);
+    document.getElementById("skelLines").style.display="none";
+    document.getElementById("pdoc").classList.add("show");
+    setStatus("done");
+    pdfBtn.disabled=false;
+  } catch(e) {
+    document.getElementById("skelLines").style.display="none";
+    document.getElementById("emptyState").style.display="flex";
+    showErr("Error: "+e.message);
+    setStatus("error");
+  }
+  genBtn.disabled=false; genBtn.textContent="✦  Regenerate";
+}
+
+function renderProposal(p, m) {
+  const today = new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
+  const d = document.getElementById("pdoc");
+
+  const scopeHTML = (p.scopeItems||[]).map(s=>`<div class="srow"><span class="srow-check">✓</span><div><strong style="font-size:11px;">${s.room}</strong><br><span style="color:#999;font-size:11px;">${s.works}</span></div></div>`).join("");
+  const inclHTML = (p.inclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#444;">✓ ${x}</div>`).join("");
+  const exclHTML = (p.exclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#ccc;">✕ ${x}</div>`).join("");
+  const lineHTML = (p.lineItems||[]).map((l,i)=>`<tr style="background:${i%2===0?"#fafafa":"#fff"}"><td>${l.item}</td><td class="c">${l.qty} ${l.unit}</td><td class="r">${l.amount}</td></tr>`).join("");
+  const phaseHTML = (p.phases||[]).map((ph,i)=>`<div class="phase-row"><div class="phase-num">${i+1}</div><div><div style="font-size:11px;font-weight:600;">${ph.phase} <span style="color:#bbb;font-weight:400;">(${ph.duration})</span></div><div style="font-size:11px;color:#999;margin-top:2px;">${ph.description}</div></div></div>`).join("");
+  const pmtHTML = (p.paymentSchedule||[]).map(pm=>`<div class="pmt-row"><span>${pm.milestone}</span><span style="color:#bbb;">${pm.pct}</span><span style="font-weight:600;">${pm.amount}</span></div>`).join("");
+
+  d.innerHTML = `
+    <h1>Design &amp; Renovation Proposal</h1>
+    <div style="font-size:10px;color:#bbb;margin-bottom:2px;">For: <strong style="color:#111;">${m.clientName}</strong>${m.clientPhone?" · "+m.clientPhone:""}</div>
+    <div class="pmeta">${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""} · ${m.address} · ${today}${p.refNo?" · "+p.refNo:""}</div>
+
+    <div class="psec"><div class="pst">Introduction</div><p class="pbody">${p.intro}</p></div>
+    <div class="psec"><div class="pst">Our understanding</div><p class="pbody">${p.understanding}</p></div>
+    <div class="psec"><div class="pst">Our approach</div><p class="pbody">${p.approach}</p></div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="pst">Scope of works</div>${scopeHTML}</div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="inc-exc"><div><div class="pst">Inclusions</div>${inclHTML}</div><div><div class="pst">Exclusions</div>${exclHTML}</div></div></div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="pst">Estimated investment</div>
+      <table class="ptable">
+        <thead><tr><th>Item</th><th class="c">Qty</th><th class="r">Amount</th></tr></thead>
+        <tbody>${lineHTML}
+          <tr><td colspan="2" style="padding-top:8px;color:#bbb;font-size:11px;">Subtotal</td><td class="r" style="padding-top:8px;">${p.subtotal}</td></tr>
+          <tr><td colspan="2" style="color:#bbb;font-size:11px;">SST</td><td class="r">${p.tax}</td></tr>
+          <tr class="tot"><td colspan="2">Total</td><td class="r">${p.total}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="pst">Timeline — ${p.timeline}</div>${phaseHTML}</div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="pst">Payment schedule</div>${pmtHTML}</div>
+    <div class="divider"></div>
+
+    <div class="psec"><div class="pst">Terms</div>
+      <div class="tgrid">
+        <div class="tbox"><div class="tbox-l">Warranty</div><div class="tbox-v">${p.warranty}</div></div>
+        <div class="tbox"><div class="tbox-l">Validity</div><div class="tbox-v">${p.validity}</div></div>
+        <div class="tbox"><div class="tbox-l">Design style</div><div class="tbox-v">${m.selStyle||"TBC"}</div></div>
+        <div class="tbox"><div class="tbox-l">Package</div><div class="tbox-v">${m.selTier}</div></div>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <p style="font-size:11px;color:#999;line-height:1.7;font-style:italic;">${p.closing}</p>
+    <div class="footer-strip">
+      <div class="footer-icon">M</div>
+      <div><div style="font-size:12px;font-weight:600;">Mushi Space Design Sdn Bhd</div>
+      <div style="font-size:10px;color:#bbb;">Space • Style • Living · 019-283 8686 · @mushispacedesign</div></div>
+    </div>`;
+}
+
+function exportPDF() {
+  if(!lastProposal||!window.jspdf) return;
+  const {jsPDF} = window.jspdf;
+  const p=lastProposal, m=lastMeta;
+  const today=new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const W=210,L=20,R=20,CW=W-L-R;
+  let y=0;
+  const ap=()=>{doc.addPage();y=20;};
+  const ck=n=>{if(y+n>272)ap();};
+  const hr=(c=[220,220,220])=>{doc.setDrawColor(...c);doc.setLineWidth(0.25);doc.line(L,y,W-R,y);};
+  const ST=t=>{ck(12);y+=7;doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(140,140,140);doc.text(t.toUpperCase(),L,y);y+=3;hr();y+=4;};
+  const BD=(t,col=[40,40,40],sz=9)=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);const ls=doc.splitTextToSize(t,CW);ck(ls.length*5);doc.text(ls,L,y);y+=ls.length*5+1;};
+
+  doc.setFillColor(15,15,15);doc.rect(0,0,W,35,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("MUSHI SPACE DESIGN SDN BHD",L,13);
+  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(170,170,170);
+  doc.text("Space  •  Style  •  Living",L,19);
+  doc.text("019-283 8686",W-R,13,{align:"right"});
+  doc.text("@mushispacedesign  ·  Kuching, Sarawak",W-R,19,{align:"right"});
+  doc.setFillColor(50,50,50);doc.rect(0,27,W,8,"F");
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(190,190,190);
+  doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  Date: ${today}  ·  Valid: ${p.validity}`,L,32.5);
+  y=48;
+  doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(15,15,15);doc.text("Design & Renovation Proposal",L,y);y+=5;
+  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(70,70,70);
+  doc.text(`Prepared for: ${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}`,L,y);y+=4;
+  doc.setFontSize(8.5);doc.setTextColor(120,120,120);
+  doc.text(`${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`,L,y);y+=3;
+  hr([200,200,200]);y+=5;
+
+  ST("Introduction");BD(p.intro);y+=1;
+  ST("Our Understanding");BD(p.understanding);y+=1;BD(p.approach);y+=2;
+  ST("Scope of Works");
+  (p.scopeItems||[]).forEach(s=>{
+    ck(14);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(20,20,20);doc.text(s.room,L+3,y);
+    const wl=doc.splitTextToSize(s.works,CW-3);doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(100,100,100);doc.text(wl,L+3,y+4.5);
+    y+=4.5+wl.length*4.5+3;hr([240,240,240]);y+=2;
+  });
+  ST("Estimated Investment");
+  doc.setFillColor(245,245,245);doc.rect(L,y-2,CW,7,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(100,100,100);
+  doc.text("Item",L+2,y+3);doc.text("Qty",L+CW*0.65,y+3,{align:"center"});doc.text("Amount",W-R-2,y+3,{align:"right"});y+=9;
+  (p.lineItems||[]).forEach((l,i)=>{
+    ck(8);if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-2,CW,7,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(40,40,40);doc.text(l.item,L+2,y+3);
+    doc.setTextColor(120,120,120);doc.setFontSize(8);doc.text(`${l.qty} ${l.unit}`,L+CW*0.65,y+3,{align:"center"});
+    doc.setTextColor(40,40,40);doc.setFontSize(9);doc.text(l.amount,W-R-2,y+3,{align:"right"});y+=7;
+  });
+  ck(20);y+=2;doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.line(L,y,W-R,y);y+=5;
+  doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(100,100,100);
+  doc.text("Subtotal",L+2,y);doc.text(p.subtotal,W-R-2,y,{align:"right"});y+=5;
+  doc.text("SST",L+2,y);doc.text(p.tax,W-R-2,y,{align:"right"});y+=5;
+  doc.setDrawColor(15,15,15);doc.setLineWidth(0.5);doc.line(L,y,W-R,y);y+=6;
+  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(15,15,15);
+  doc.text("Total Estimated Cost",L+2,y);doc.text(p.total,W-R-2,y,{align:"right"});y+=9;
+  ST(`Project Timeline — ${p.timeline}`);
+  (p.phases||[]).forEach((ph,i)=>{
+    ck(14);doc.setFillColor(248,248,248);doc.rect(L,y-2,CW,12,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(20,20,20);doc.text(`${i+1}. ${ph.phase}`,L+3,y+3);
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(120,120,120);doc.text(ph.duration,W-R-3,y+3,{align:"right"});
+    const dl=doc.splitTextToSize(ph.description,CW-6);doc.text(dl,L+3,y+7.5);y+=12+dl.length*4+2;
+  });
+  ST("Payment Schedule");
+  doc.setFillColor(245,245,245);doc.rect(L,y-2,CW,7,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(100,100,100);
+  doc.text("Milestone",L+2,y+3);doc.text("%",L+CW*0.6,y+3);doc.text("Amount",W-R-2,y+3,{align:"right"});y+=9;
+  (p.paymentSchedule||[]).forEach((pm,i)=>{
+    ck(8);if(i%2===0){doc.setFillColor(252,252,252);doc.rect(L,y-2,CW,7,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(40,40,40);
+    doc.text(pm.milestone,L+2,y+3);doc.setTextColor(120,120,120);doc.text(pm.pct,L+CW*0.6,y+3);
+    doc.setTextColor(40,40,40);doc.text(pm.amount,W-R-2,y+3,{align:"right"});y+=7;
+  });
+  ck(20);y+=3;hr([200,200,200]);y+=6;
+  doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.setTextColor(100,100,100);
+  const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*5+10;
+  ck(20);doc.setFillColor(15,15,15);doc.rect(0,y,W,18,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text("Mushi Space Design Sdn Bhd",L,y+7);
+  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(170,170,170);
+  doc.text("019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,y+13);
+  const tot=doc.getNumberOfPages();
+  for(let i=1;i<=tot;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(180,180,180);doc.text(`Page ${i} of ${tot}`,W-R,290,{align:"right"});}
+  doc.save(`Mushi_Proposal_${m.clientName.replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+</script>
+</body>
+</html>
