@@ -95,9 +95,7 @@
 </div>
 
 <div class="layout">
-  <!-- LEFT FORM -->
   <div class="col-l">
-
     <div class="sec-label">Client information</div>
     <div class="g2">
       <div class="fg"><label>Client name</label><input id="clientName" placeholder="Mr. & Mrs. Tan"/></div>
@@ -136,27 +134,21 @@
         </select>
       </div>
     </div>
-
     <div class="sec-label">Rooms in scope</div>
     <div class="chips" id="roomGrid"></div>
-
     <div class="sec-label">Scope of works</div>
     <div class="chips" id="worksGrid"></div>
-
     <div class="sec-label">Design style</div>
     <div class="g3" id="styleGrid"></div>
-
     <div class="sec-label">Package & budget</div>
     <div class="g3" id="tierGrid"></div>
     <div class="g2" style="margin-top:8px;">
       <div class="fg"><label>Client budget (RM)</label><input id="budget" placeholder="e.g. 80,000"/></div>
       <div class="fg"><label>Target move-in</label><input id="moveIn" placeholder="e.g. August 2026"/></div>
     </div>
-
     <div class="sec-label">Notes</div>
     <div class="fg"><label>Style preferences & special requests</label><textarea id="notes" placeholder="e.g. Light wood tones, pet-friendly, existing sofa to keep..."></textarea></div>
     <div class="fg"><label>Site conditions</label><textarea id="siteNotes" placeholder="e.g. Old unit, tiles to hack, false ceiling to remove..."></textarea></div>
-
     <div class="err" id="errMsg"></div>
     <div class="btn-row">
       <button class="btn-primary" id="genBtn" onclick="generate()">✦&nbsp; Generate Proposal</button>
@@ -164,7 +156,6 @@
     </div>
   </div>
 
-  <!-- RIGHT OUTPUT -->
   <div class="col-r">
     <div class="status-bar">
       <div class="dot" id="dot"></div>
@@ -238,7 +229,7 @@ function hideErr() { document.getElementById("errMsg").style.display="none"; }
 function setStatus(state) {
   const dot=document.getElementById("dot"), txt=document.getElementById("statusTxt");
   dot.className = "dot" + (state==="loading"?" live":"");
-  txt.textContent = state==="idle"?"Ready — fill in the form and generate":state==="loading"?"Claude is writing your proposal...":state==="done"?"Ready to send":"Generation failed — check error";
+  txt.textContent = state==="idle"?"Ready — fill in the form and generate":state==="loading"?"Generating your proposal...":state==="done"?"Ready to send":"Generation failed — check error";
 }
 
 async function generate() {
@@ -248,14 +239,12 @@ async function generate() {
   if(!clientName||!propType||selRooms.length===0||selWorks.length===0) {
     showErr("Please enter client name, property type, and select at least one room and scope of work."); return;
   }
-
   const genBtn=document.getElementById("genBtn"), pdfBtn=document.getElementById("pdfBtn");
   genBtn.disabled=true; genBtn.textContent="Generating..."; pdfBtn.disabled=true;
   document.getElementById("emptyState").style.display="none";
   document.getElementById("pdoc").classList.remove("show");
   document.getElementById("skelLines").style.display="block";
   setStatus("loading");
-
   const tierObj = TIERS.find(t=>t.label===selTier)||TIERS[1];
   const meta = {
     clientName, clientPhone:document.getElementById("clientPhone").value.trim(),
@@ -263,7 +252,6 @@ async function generate() {
     propType, propSize:document.getElementById("propSize").value.trim(),
     selStyle, selTier,
   };
-
   try {
     const res = await fetch("/api/generate", {
       method:"POST",
@@ -300,30 +288,24 @@ async function generate() {
 function renderProposal(p, m) {
   const today = new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
   const d = document.getElementById("pdoc");
-
   const scopeHTML = (p.scopeItems||[]).map(s=>`<div class="srow"><span class="srow-check">✓</span><div><strong style="font-size:11px;">${s.room}</strong><br><span style="color:#999;font-size:11px;">${s.works}</span></div></div>`).join("");
   const inclHTML = (p.inclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#444;">✓ ${x}</div>`).join("");
   const exclHTML = (p.exclusions||[]).map(x=>`<div style="font-size:11px;padding:4px 0;border-bottom:1px solid #f5f5f5;color:#ccc;">✕ ${x}</div>`).join("");
   const lineHTML = (p.lineItems||[]).map((l,i)=>`<tr style="background:${i%2===0?"#fafafa":"#fff"}"><td>${l.item}</td><td class="c">${l.qty} ${l.unit}</td><td class="r">${l.amount}</td></tr>`).join("");
   const phaseHTML = (p.phases||[]).map((ph,i)=>`<div class="phase-row"><div class="phase-num">${i+1}</div><div><div style="font-size:11px;font-weight:600;">${ph.phase} <span style="color:#bbb;font-weight:400;">(${ph.duration})</span></div><div style="font-size:11px;color:#999;margin-top:2px;">${ph.description}</div></div></div>`).join("");
   const pmtHTML = (p.paymentSchedule||[]).map(pm=>`<div class="pmt-row"><span>${pm.milestone}</span><span style="color:#bbb;">${pm.pct}</span><span style="font-weight:600;">${pm.amount}</span></div>`).join("");
-
   d.innerHTML = `
     <h1>Design &amp; Renovation Proposal</h1>
     <div style="font-size:10px;color:#bbb;margin-bottom:2px;">For: <strong style="color:#111;">${m.clientName}</strong>${m.clientPhone?" · "+m.clientPhone:""}</div>
     <div class="pmeta">${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""} · ${m.address} · ${today}${p.refNo?" · "+p.refNo:""}</div>
-
     <div class="psec"><div class="pst">Introduction</div><p class="pbody">${p.intro}</p></div>
     <div class="psec"><div class="pst">Our understanding</div><p class="pbody">${p.understanding}</p></div>
     <div class="psec"><div class="pst">Our approach</div><p class="pbody">${p.approach}</p></div>
     <div class="divider"></div>
-
     <div class="psec"><div class="pst">Scope of works</div>${scopeHTML}</div>
     <div class="divider"></div>
-
     <div class="psec"><div class="inc-exc"><div><div class="pst">Inclusions</div>${inclHTML}</div><div><div class="pst">Exclusions</div>${exclHTML}</div></div></div>
     <div class="divider"></div>
-
     <div class="psec"><div class="pst">Estimated investment</div>
       <table class="ptable">
         <thead><tr><th>Item</th><th class="c">Qty</th><th class="r">Amount</th></tr></thead>
@@ -335,13 +317,10 @@ function renderProposal(p, m) {
       </table>
     </div>
     <div class="divider"></div>
-
     <div class="psec"><div class="pst">Timeline — ${p.timeline}</div>${phaseHTML}</div>
     <div class="divider"></div>
-
     <div class="psec"><div class="pst">Payment schedule</div>${pmtHTML}</div>
     <div class="divider"></div>
-
     <div class="psec"><div class="pst">Terms</div>
       <div class="tgrid">
         <div class="tbox"><div class="tbox-l">Warranty</div><div class="tbox-v">${p.warranty}</div></div>
@@ -351,7 +330,6 @@ function renderProposal(p, m) {
       </div>
     </div>
     <div class="divider"></div>
-
     <p style="font-size:11px;color:#999;line-height:1.7;font-style:italic;">${p.closing}</p>
     <div class="footer-strip">
       <div class="footer-icon">M</div>
@@ -366,82 +344,110 @@ function exportPDF() {
   const p=lastProposal, m=lastMeta;
   const today=new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
   const doc=new jsPDF({unit:"mm",format:"a4"});
-  const W=210,L=20,R=20,CW=W-L-R;
+  const W=210,L=14,R=14,CW=W-L-R;
   let y=0;
-  const ap=()=>{doc.addPage();y=20;};
-  const ck=n=>{if(y+n>272)ap();};
-  const hr=(c=[220,220,220])=>{doc.setDrawColor(...c);doc.setLineWidth(0.25);doc.line(L,y,W-R,y);};
-  const ST=t=>{ck(12);y+=7;doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(140,140,140);doc.text(t.toUpperCase(),L,y);y+=3;hr();y+=4;};
-  const BD=(t,col=[40,40,40],sz=9)=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);const ls=doc.splitTextToSize(t,CW);ck(ls.length*5);doc.text(ls,L,y);y+=ls.length*5+1;};
+  const hr=(c=[220,220,220])=>{doc.setDrawColor(...c);doc.setLineWidth(0.2);doc.line(L,y,W-R,y);};
+  const ST=t=>{y+=5;doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);doc.text(t.toUpperCase(),L,y);y+=2.5;hr();y+=3;};
+  const BD=(t,col=[50,50,50],sz=8)=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);const ls=doc.splitTextToSize(t,CW);doc.text(ls,L,y);y+=ls.length*4.2+0.5;};
 
-  doc.setFillColor(15,15,15);doc.rect(0,0,W,35,"F");
-  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("MUSHI SPACE DESIGN SDN BHD",L,13);
-  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(170,170,170);
-  doc.text("Space  •  Style  •  Living",L,19);
-  doc.text("019-283 8686",W-R,13,{align:"right"});
-  doc.text("@mushispacedesign  ·  Kuching, Sarawak",W-R,19,{align:"right"});
-  doc.setFillColor(50,50,50);doc.rect(0,27,W,8,"F");
-  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(190,190,190);
-  doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  Date: ${today}  ·  Valid: ${p.validity}`,L,32.5);
-  y=48;
-  doc.setFont("helvetica","bold");doc.setFontSize(16);doc.setTextColor(15,15,15);doc.text("Design & Renovation Proposal",L,y);y+=5;
-  doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(70,70,70);
-  doc.text(`Prepared for: ${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}`,L,y);y+=4;
-  doc.setFontSize(8.5);doc.setTextColor(120,120,120);
-  doc.text(`${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`,L,y);y+=3;
-  hr([200,200,200]);y+=5;
+  doc.setFillColor(15,15,15);doc.rect(0,0,W,22,"F");
+  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("MUSHI SPACE DESIGN SDN BHD",L,10);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
+  doc.text("Space  •  Style  •  Living",L,16);
+  doc.text("019-283 8686  ·  @mushispacedesign",W-R,10,{align:"right"});
+  doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  ${today}  ·  Valid: ${p.validity}`,W-R,16,{align:"right"});
 
-  ST("Introduction");BD(p.intro);y+=1;
-  ST("Our Understanding");BD(p.understanding);y+=1;BD(p.approach);y+=2;
+  y=30;
+  doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(15,15,15);doc.text("Design & Renovation Proposal",L,y);y+=5;
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(80,80,80);
+  doc.text(`${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}  ·  ${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`,L,y);y+=2;
+  hr([200,200,200]);y+=1;
+
+  ST("Overview");
+  BD(p.intro);y+=1;
+  BD(p.understanding,[80,80,80]);y+=1;
+  BD(p.approach,[80,80,80]);
+
   ST("Scope of Works");
-  (p.scopeItems||[]).forEach(s=>{
-    ck(14);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(20,20,20);doc.text(s.room,L+3,y);
-    const wl=doc.splitTextToSize(s.works,CW-3);doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(100,100,100);doc.text(wl,L+3,y+4.5);
-    y+=4.5+wl.length*4.5+3;hr([240,240,240]);y+=2;
+  (p.scopeItems||[]).forEach((s,i)=>{
+    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(20,20,20);doc.text(s.room,L,y);y+=3.5;
+    const wl=doc.splitTextToSize(s.works,CW);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);doc.text(wl,L,y);
+    y+=wl.length*4+2;
+    if(i<(p.scopeItems.length-1)){hr([240,240,240]);y+=2;}
   });
-  ST("Estimated Investment");
-  doc.setFillColor(245,245,245);doc.rect(L,y-2,CW,7,"F");
-  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(100,100,100);
-  doc.text("Item",L+2,y+3);doc.text("Qty",L+CW*0.65,y+3,{align:"center"});doc.text("Amount",W-R-2,y+3,{align:"right"});y+=9;
+
+  ST("Estimated Investment  &  Payment Schedule");
+  const halfCW=(CW-6)/2;
+  const tableStartY=y;
+
+  doc.setFillColor(245,245,245);doc.rect(L,y-1,halfCW,5.5,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
+  doc.text("Item",L+1,y+3);doc.text("Amount",L+halfCW-1,y+3,{align:"right"});
+  y+=7;
   (p.lineItems||[]).forEach((l,i)=>{
-    ck(8);if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-2,CW,7,"F");}
-    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(40,40,40);doc.text(l.item,L+2,y+3);
-    doc.setTextColor(120,120,120);doc.setFontSize(8);doc.text(`${l.qty} ${l.unit}`,L+CW*0.65,y+3,{align:"center"});
-    doc.setTextColor(40,40,40);doc.setFontSize(9);doc.text(l.amount,W-R-2,y+3,{align:"right"});y+=7;
+    if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-1,halfCW,5.5,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
+    const itemTxt=doc.splitTextToSize(l.item,halfCW-20);
+    doc.text(itemTxt[0],L+1,y+3);
+    doc.text(l.amount,L+halfCW-1,y+3,{align:"right"});
+    y+=5.5;
   });
-  ck(20);y+=2;doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.line(L,y,W-R,y);y+=5;
-  doc.setFont("helvetica","normal");doc.setFontSize(8.5);doc.setTextColor(100,100,100);
-  doc.text("Subtotal",L+2,y);doc.text(p.subtotal,W-R-2,y,{align:"right"});y+=5;
-  doc.text("SST",L+2,y);doc.text(p.tax,W-R-2,y,{align:"right"});y+=5;
-  doc.setDrawColor(15,15,15);doc.setLineWidth(0.5);doc.line(L,y,W-R,y);y+=6;
-  doc.setFont("helvetica","bold");doc.setFontSize(11);doc.setTextColor(15,15,15);
-  doc.text("Total Estimated Cost",L+2,y);doc.text(p.total,W-R-2,y,{align:"right"});y+=9;
-  ST(`Project Timeline — ${p.timeline}`);
-  (p.phases||[]).forEach((ph,i)=>{
-    ck(14);doc.setFillColor(248,248,248);doc.rect(L,y-2,CW,12,"F");
-    doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(20,20,20);doc.text(`${i+1}. ${ph.phase}`,L+3,y+3);
-    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(120,120,120);doc.text(ph.duration,W-R-3,y+3,{align:"right"});
-    const dl=doc.splitTextToSize(ph.description,CW-6);doc.text(dl,L+3,y+7.5);y+=12+dl.length*4+2;
-  });
-  ST("Payment Schedule");
-  doc.setFillColor(245,245,245);doc.rect(L,y-2,CW,7,"F");
-  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(100,100,100);
-  doc.text("Milestone",L+2,y+3);doc.text("%",L+CW*0.6,y+3);doc.text("Amount",W-R-2,y+3,{align:"right"});y+=9;
+  y+=1;doc.setDrawColor(160,160,160);doc.setLineWidth(0.3);doc.line(L,y,L+halfCW,y);y+=3.5;
+  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);
+  doc.text("Subtotal",L+1,y);doc.text(p.subtotal,L+halfCW-1,y,{align:"right"});y+=4;
+  doc.text("SST",L+1,y);doc.text(p.tax,L+halfCW-1,y,{align:"right"});y+=4;
+  doc.setDrawColor(15,15,15);doc.setLineWidth(0.4);doc.line(L,y,L+halfCW,y);y+=4;
+  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(15,15,15);
+  doc.text("Total",L+1,y);doc.text(p.total,L+halfCW-1,y,{align:"right"});
+  const leftEndY=y+4;
+
+  let ry=tableStartY;
+  const rx=L+halfCW+6;
+  const rw=halfCW;
+
+  doc.setFillColor(245,245,245);doc.rect(rx,ry-1,rw,5.5,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
+  doc.text("Payment Milestone",rx+1,ry+3);doc.text("Amount",rx+rw-1,ry+3,{align:"right"});ry+=7;
   (p.paymentSchedule||[]).forEach((pm,i)=>{
-    ck(8);if(i%2===0){doc.setFillColor(252,252,252);doc.rect(L,y-2,CW,7,"F");}
-    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(40,40,40);
-    doc.text(pm.milestone,L+2,y+3);doc.setTextColor(120,120,120);doc.text(pm.pct,L+CW*0.6,y+3);
-    doc.setTextColor(40,40,40);doc.text(pm.amount,W-R-2,y+3,{align:"right"});y+=7;
+    if(i%2===0){doc.setFillColor(251,251,251);doc.rect(rx,ry-1,rw,5.5,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
+    doc.text(`${pm.milestone} (${pm.pct})`,rx+1,ry+3);
+    doc.text(pm.amount,rx+rw-1,ry+3,{align:"right"});ry+=5.5;
   });
-  ck(20);y+=3;hr([200,200,200]);y+=6;
-  doc.setFont("helvetica","italic");doc.setFontSize(8.5);doc.setTextColor(100,100,100);
-  const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*5+10;
-  ck(20);doc.setFillColor(15,15,15);doc.rect(0,y,W,18,"F");
-  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(255,255,255);doc.text("Mushi Space Design Sdn Bhd",L,y+7);
-  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(170,170,170);
-  doc.text("019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,y+13);
-  const tot=doc.getNumberOfPages();
-  for(let i=1;i<=tot;i++){doc.setPage(i);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(180,180,180);doc.text(`Page ${i} of ${tot}`,W-R,290,{align:"right"});}
+  ry+=3;
+
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(160,160,160);doc.text(`TIMELINE — ${p.timeline}`.toUpperCase(),rx,ry);ry+=2.5;
+  doc.setDrawColor(220,220,220);doc.setLineWidth(0.2);doc.line(rx,ry,rx+rw,ry);ry+=3;
+  (p.phases||[]).forEach((ph,i)=>{
+    doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);
+    doc.text(`${i+1}. ${ph.phase}`,rx+1,ry);
+    doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(140,140,140);doc.text(ph.duration,rx+rw-1,ry,{align:"right"});ry+=3.5;
+    const dl=doc.splitTextToSize(ph.description,rw-2);doc.setFontSize(7);doc.setTextColor(110,110,110);doc.text(dl,rx+1,ry);ry+=dl.length*3.5+2;
+  });
+
+  y=Math.max(leftEndY,ry)+3;
+
+  ST("Inclusions & Exclusions");
+  const iex_halfCW=(CW-6)/2;
+  let iy=y,ey=y;
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("INCLUDED",L,iy);iy+=3;
+  (p.inclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(50,50,50);doc.text("+ "+x,L,iy);iy+=4;});
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("NOT INCLUDED",L+iex_halfCW+6,ey);ey+=3;
+  (p.exclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(150,150,150);doc.text("- "+x,L+iex_halfCW+6,ey);ey+=4;});
+  y=Math.max(iy,ey)+3;
+
+  hr([200,200,200]);y+=4;
+  doc.setFont("helvetica","italic");doc.setFontSize(7.5);doc.setTextColor(120,120,120);
+  const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*4+4;
+
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);
+  doc.text(`Warranty: ${p.warranty}  ·  Style: ${m.selStyle||"TBC"}  ·  Package: ${m.selTier}`,L,y);y+=8;
+
+  doc.setFillColor(15,15,15);doc.rect(0,y,W,14,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text("Mushi Space Design Sdn Bhd",L,y+6);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
+  doc.text("Space • Style • Living  ·  019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,y+11);
+
   doc.save(`Mushi_Proposal_${m.clientName.replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 </script>
