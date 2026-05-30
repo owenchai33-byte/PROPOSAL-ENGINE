@@ -6,4 +6,3 @@ module.exports = (req, res) => {
   if (password === correct) return res.status(200).json({ ok: true });
   return res.status(401).json({ error: "Wrong password" });
 };
- 
