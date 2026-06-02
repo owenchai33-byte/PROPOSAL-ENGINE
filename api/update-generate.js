@@ -1,20 +1,19 @@
 const MODELS = [
   "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-2.5-flash",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
-  "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey, model, prompt) {
-  const version = model.includes("1.5") ? "v1" : "v1beta";
-  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
-  const genConfig = { temperature: 0.6, maxOutputTokens: 1024 };
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: genConfig,
+      generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
     }),
   });
   const data = await res.json();
@@ -22,6 +21,16 @@ async function callGemini(apiKey, model, prompt) {
   const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
   if (!raw) throw new Error("Empty response");
   return raw;
+}
+
+function shouldTryNext(errMsg) {
+  const m = errMsg.toLowerCase();
+  return (
+    m.includes("quota") || m.includes("rate limit") || m.includes("resource_exhausted") ||
+    m.includes("429") || m.includes("503") || m.includes("overloaded") ||
+    m.includes("unavailable") || m.includes("high demand") ||
+    m.includes("not found") || m.includes("not support") || m.includes("404")
+  );
 }
 
 async function callWithRetry(apiKey, prompt) {
@@ -32,16 +41,15 @@ async function callWithRetry(apiKey, prompt) {
         return await callGemini(apiKey, model, prompt);
       } catch (err) {
         lastError = err;
-        const msg = err.message?.toLowerCase() || "";
-        const isRetryable = msg.includes("overloaded") || msg.includes("503") || msg.includes("unavailable") || msg.includes("high demand");
-        const isQuotaHit = msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
-        if (isRetryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
-        if (isRetryable || isQuotaHit) break;
+        const retryable = err.message?.toLowerCase().includes("overloaded") ||
+                          err.message?.toLowerCase().includes("503");
+        if (retryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        if (shouldTryNext(err.message || "")) break;
         throw err;
       }
     }
   }
-  throw new Error("AI service is temporarily unavailable. Please wait a moment and try again.");
+  throw new Error("AI service is temporarily busy. Please wait a few seconds and try again.");
 }
 
 module.exports = async (req, res) => {
@@ -51,17 +59,13 @@ module.exports = async (req, res) => {
   const langMap = { en: "English", ms: "Malay (Bahasa Malaysia)", zh: "Mandarin Chinese (Simplified)" };
   const langName = langMap[language] || "English";
   const today = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-  const prompt = `You are writing a professional renovation progress update for Mushi Space Design Sdn Bhd to send to their client via WhatsApp.
-Project: ${projectName}
-Client: ${clientName}
-Date: ${today}
-Overall progress: ${progress}%
+  const prompt = `Write a professional renovation progress WhatsApp update for Mushi Space Design Sdn Bhd.
+Project: ${projectName} | Client: ${clientName} | Date: ${today} | Progress: ${progress}%
 Language: ${langName}
-Completed today: ${completed}
-Next steps: ${nextSteps}
+Completed: ${completed}
+Next: ${nextSteps}
 Issues: ${issues || "None"}
-Write a professional, warm, clear WhatsApp message in ${langName}.
-Rules: Concise, easy to read on phone. Use emojis: completed, next steps, issues, progress. Skip issues if none. Natural language. No preamble. Start with client greeting.`;
+Rules: Short, warm, professional. Use ✅ 🔨 ⚠️ 📊 emojis. Skip issues section if none. Natural ${langName}. No preamble. Start with client greeting.`;
   try {
     const message = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
     return res.status(200).json({ message });
