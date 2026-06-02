@@ -1377,16 +1377,24 @@ async function delProj(id,name){
   await loadProjects();
 }
 
+const SQL_MIGRATION_MSG = `Client Portal setup required.\n\nPlease run this SQL in your Supabase project:\n\n1. Go to supabase.com → your project\n2. Click SQL Editor in the left sidebar\n3. Click New Query\n4. Paste and run:\n\nALTER TABLE projects ADD COLUMN IF NOT EXISTS portal_active boolean DEFAULT false;\nALTER TABLE projects ADD COLUMN IF NOT EXISTS portal_language text DEFAULT 'en';\n\nThen try again.`;
+
 async function togglePortal(id,active){
   try{
-    await fetch("/api/projects",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,portal_active:active})});
+    const r=await fetch("/api/projects",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,portal_active:active})});
+    const d=await r.json();
+    if(d.error==="SQL_MIGRATION_REQUIRED"){alert(SQL_MIGRATION_MSG);return;}
+    if(d.error){alert("Error: "+d.error);return;}
     await loadProjects();
   }catch(e){alert("Failed to update portal: "+e.message);}
 }
 
 async function setPortalLang(id,lang){
   try{
-    await fetch("/api/projects",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,portal_language:lang})});
+    const r=await fetch("/api/projects",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,portal_language:lang})});
+    const d=await r.json();
+    if(d.error==="SQL_MIGRATION_REQUIRED"){alert(SQL_MIGRATION_MSG);return;}
+    if(d.error){alert("Error: "+d.error);return;}
     await loadProjects();
   }catch(e){alert("Failed to update language: "+e.message);}
 }
