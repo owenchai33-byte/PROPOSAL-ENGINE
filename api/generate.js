@@ -1,7 +1,9 @@
+// Free tier quotas (requests/day): gemini-1.5-flash=1500, gemini-1.5-flash-8b=1500, gemini-2.0-flash-lite=1500, gemini-2.0-flash=1500
+// Try most reliable free models first, skip paid/experimental ones
 const MODELS = [
-  "gemini-2.0-flash",
-  "gemini-1.5-flash",
-  "gemini-2.5-flash",
+  "gemini-1.5-flash",        // Most stable free tier
+  "gemini-1.5-flash-8b",     // Fast, generous free quota
+  "gemini-2.0-flash-lite",   // Lightest 2.0 model, high free limits
 ];
 
 async function callGemini(apiKey, model, prompt) {
@@ -24,26 +26,25 @@ async function callGemini(apiKey, model, prompt) {
 async function callWithRetry(apiKey, prompt) {
   let lastError;
   for (const model of MODELS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const raw = await callGemini(apiKey, model, prompt);
         return raw;
       } catch (err) {
         lastError = err;
-        const isOverload = err.message?.toLowerCase().includes("overloaded") ||
-                           err.message?.toLowerCase().includes("high demand") ||
-                           err.message?.toLowerCase().includes("503") ||
-                           err.message?.toLowerCase().includes("unavailable");
-        if (isOverload && attempt < 3) {
-          await new Promise(r => setTimeout(r, attempt * 1500));
+        const msg = err.message?.toLowerCase() || "";
+        const isRetryable = msg.includes("overloaded") || msg.includes("503") || msg.includes("unavailable") || msg.includes("high demand");
+        const isQuotaHit = msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
+        if (isRetryable && attempt < 2) {
+          await new Promise(r => setTimeout(r, 2000));
           continue;
         }
-        if (isOverload) break; // try next model
-        throw err; // non-overload error, don't retry
+        if (isRetryable || isQuotaHit) break; // try next model
+        throw err; // real error, stop
       }
     }
   }
-  throw lastError || new Error("All models unavailable. Please try again in a moment.");
+  throw new Error("AI service is temporarily unavailable. Please wait a moment and try again.");
 }
 
 module.exports = async (req, res) => {
@@ -60,7 +61,7 @@ module.exports = async (req, res) => {
 
   const hasPrices = customPrices && Object.keys(customPrices).length > 0;
   const pricingBlock = hasPrices
-    ? `PRICING — use these EXACT amounts for line items (do not change them):\n${Object.entries(customPrices).map(([k,v]) => `- ${k}: RM ${v}`).join("\n")}\nFor any selected work NOT listed above, estimate realistically within the ${selTier} tier.`
+    ? `PRICING — use these EXACT amounts for line items:\n${Object.entries(customPrices).map(([k,v]) => `- ${k}: RM ${v}`).join("\n")}\nFor any selected work NOT listed above, estimate within the ${selTier} tier.`
     : `Estimate all prices realistically within the ${selTier} tier (${tierRange}).`;
 
   const prompt = `You are writing a professional interior design & renovation proposal for Mushi Space Design Sdn Bhd, Kuching. Tagline: "Space - Style - Living".
@@ -88,8 +89,7 @@ Return ONLY valid JSON, no markdown, no backticks:
 {"refNo":"MSD-2026-XXX","intro":"1 sentence","understanding":"2 sentences","approach":"1 sentence","scopeItems":[{"room":"Room","works":"1-2 sentences for this room only"}],"inclusions":["4-5 short items"],"exclusions":["3-4 short items"],"lineItems":[{"item":"Work item","qty":"1","unit":"lot","amount":"RM XX,XXX"}],"subtotal":"RM XX,XXX","tax":"RM 0 (SST Exempt)","total":"RM XX,XXX","timeline":"X-X weeks","phases":[{"phase":"Name","duration":"X weeks","description":"1 sentence"}],"paymentSchedule":[{"milestone":"Upon signing","pct":"30%","amount":"RM XX,XXX"},{"milestone":"Upon design approval","pct":"40%","amount":"RM XX,XXX"},{"milestone":"Upon completion","pct":"30%","amount":"RM XX,XXX"}],"warranty":"12 months defect liability on workmanship","validity":"14 days from proposal date","closing":"1 sentence"}`;
 
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    const raw = await callWithRetry(apiKey, prompt);
+    const raw = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
     const proposal = JSON.parse(raw.replace(/```json|```/g, "").trim());
     res.status(200).json({ proposal });
   } catch (err) {
