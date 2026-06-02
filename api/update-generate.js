@@ -1,17 +1,20 @@
 const MODELS = [
+  "gemini-2.0-flash",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
   "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey, model, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const version = model.includes("1.5") ? "v1" : "v1beta";
+  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
+  const genConfig = { temperature: 0.6, maxOutputTokens: 1024 };
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
+      generationConfig: genConfig,
     }),
   });
   const data = await res.json();
@@ -58,7 +61,7 @@ Completed today: ${completed}
 Next steps: ${nextSteps}
 Issues: ${issues || "None"}
 Write a professional, warm, clear WhatsApp message in ${langName}.
-Rules: Concise, easy to read on phone. Use ✅ completed, 🔨 next steps, ⚠️ issues, 📊 progress. Skip issues if none. Natural language, not a translation. No preamble. Start with client greeting.`;
+Rules: Concise, easy to read on phone. Use emojis: completed, next steps, issues, progress. Skip issues if none. Natural language. No preamble. Start with client greeting.`;
   try {
     const message = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
     return res.status(200).json({ message });
