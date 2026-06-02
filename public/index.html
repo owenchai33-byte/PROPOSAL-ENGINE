@@ -1481,7 +1481,7 @@ async function generateUpdate(){
   const btn=document.getElementById("updGenBtn");btn.disabled=true;btn.textContent="Generating...";
   try{
     uploadedUrls=await uploadAllPhotos();
-    const r=await fetch("/api/update-generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projectName:curProj.name,clientName:curProj.client_name,completed,nextSteps,issues,progress,language:selLang})});
+    const r=await fetch("/api/update-generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({projectName:curProj.name,clientName:curProj.client_name,completed,nextSteps,issues,progress,language:selLang,hasPhotos:uploadedUrls.length>0})});
     const data=await r.json();if(data.error)throw new Error(data.error);
     lastMsg=data.message;
     document.getElementById("genMsg").textContent=data.message;
