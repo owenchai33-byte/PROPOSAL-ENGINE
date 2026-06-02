@@ -1,19 +1,21 @@
-// Free tier quotas (requests/day): gemini-1.5-flash=1500, gemini-1.5-flash-8b=1500, gemini-2.0-flash-lite=1500, gemini-2.0-flash=1500
-// Try most reliable free models first, skip paid/experimental ones
 const MODELS = [
-  "gemini-1.5-flash",        // Most stable free tier
-  "gemini-1.5-flash-8b",     // Fast, generous free quota
-  "gemini-2.0-flash-lite",   // Lightest 2.0 model, high free limits
+  "gemini-2.0-flash",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey, model, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const version = model.includes("1.5") ? "v1" : "v1beta";
+  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
+  const genConfig = { temperature: 0.4, maxOutputTokens: 8192 };
+  if (!model.includes("1.5")) genConfig.responseMimeType = "application/json";
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.4, maxOutputTokens: 8192, responseMimeType: "application/json" },
+      generationConfig: genConfig,
     }),
   });
   const data = await res.json();
@@ -35,12 +37,9 @@ async function callWithRetry(apiKey, prompt) {
         const msg = err.message?.toLowerCase() || "";
         const isRetryable = msg.includes("overloaded") || msg.includes("503") || msg.includes("unavailable") || msg.includes("high demand");
         const isQuotaHit = msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
-        if (isRetryable && attempt < 2) {
-          await new Promise(r => setTimeout(r, 2000));
-          continue;
-        }
-        if (isRetryable || isQuotaHit) break; // try next model
-        throw err; // real error, stop
+        if (isRetryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        if (isRetryable || isQuotaHit) break;
+        throw err;
       }
     }
   }
