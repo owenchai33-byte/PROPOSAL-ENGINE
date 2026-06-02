@@ -1,7 +1,7 @@
 const MODELS = [
-  "gemini-2.0-flash",
   "gemini-1.5-flash",
-  "gemini-2.5-flash",
+  "gemini-1.5-flash-8b",
+  "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey, model, prompt) {
@@ -24,58 +24,41 @@ async function callGemini(apiKey, model, prompt) {
 async function callWithRetry(apiKey, prompt) {
   let lastError;
   for (const model of MODELS) {
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         return await callGemini(apiKey, model, prompt);
       } catch (err) {
         lastError = err;
-        const isOverload = err.message?.toLowerCase().includes("overloaded") ||
-                           err.message?.toLowerCase().includes("high demand") ||
-                           err.message?.toLowerCase().includes("503") ||
-                           err.message?.toLowerCase().includes("unavailable");
-        if (isOverload && attempt < 3) {
-          await new Promise(r => setTimeout(r, attempt * 1500));
-          continue;
-        }
-        if (isOverload) break;
+        const msg = err.message?.toLowerCase() || "";
+        const isRetryable = msg.includes("overloaded") || msg.includes("503") || msg.includes("unavailable") || msg.includes("high demand");
+        const isQuotaHit = msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
+        if (isRetryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
+        if (isRetryable || isQuotaHit) break;
         throw err;
       }
     }
   }
-  throw lastError || new Error("All models unavailable. Please try again in a moment.");
+  throw new Error("AI service is temporarily unavailable. Please wait a moment and try again.");
 }
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-
   const { projectName, clientName, completed, nextSteps, issues, progress, language } = req.body;
   if (!completed || !nextSteps) return res.status(400).json({ error: "Missing required fields" });
-
   const langMap = { en: "English", ms: "Malay (Bahasa Malaysia)", zh: "Mandarin Chinese (Simplified)" };
   const langName = langMap[language] || "English";
   const today = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-
-  const prompt = `You are writing a professional renovation progress update message for Mushi Space Design Sdn Bhd to send to their client via WhatsApp.
+  const prompt = `You are writing a professional renovation progress update for Mushi Space Design Sdn Bhd to send to their client via WhatsApp.
 Project: ${projectName}
 Client: ${clientName}
 Date: ${today}
 Overall progress: ${progress}%
 Language: ${langName}
-Raw notes from site supervisor:
-- Completed today: ${completed}
-- Next steps: ${nextSteps}
-- Issues or delays: ${issues || "None"}
-Write a professional, warm, clear WhatsApp update message in ${langName}.
-Rules:
-- Concise, easy to read on a phone
-- Use emojis: ✅ completed, 🔨 next steps, ⚠️ issues, 📊 progress
-- Warm but professional tone
-- End with a reassuring closing line
-- Skip issues section if there are none
-- If Malay or Chinese, write naturally — not a direct translation
-- Do NOT include any preamble like "Here is the message:" — write the message directly
-- Start with a greeting to the client by name`;
-
+Completed today: ${completed}
+Next steps: ${nextSteps}
+Issues: ${issues || "None"}
+Write a professional, warm, clear WhatsApp message in ${langName}.
+Rules: Concise, easy to read on phone. Use ✅ completed, 🔨 next steps, ⚠️ issues, 📊 progress. Skip issues if none. Natural language, not a translation. No preamble. Start with client greeting.`;
   try {
     const message = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
     return res.status(200).json({ message });
