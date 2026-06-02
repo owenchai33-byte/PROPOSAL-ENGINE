@@ -13,7 +13,7 @@ async function callGemini(apiKey, model, prompt) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.5, maxOutputTokens: 1024 },
     }),
   });
   const data = await res.json();
@@ -41,8 +41,7 @@ async function callWithRetry(apiKey, prompt) {
         return await callGemini(apiKey, model, prompt);
       } catch (err) {
         lastError = err;
-        const retryable = err.message?.toLowerCase().includes("overloaded") ||
-                          err.message?.toLowerCase().includes("503");
+        const retryable = err.message?.toLowerCase().includes("overloaded") || err.message?.toLowerCase().includes("503");
         if (retryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
         if (shouldTryNext(err.message || "")) break;
         throw err;
@@ -54,21 +53,55 @@ async function callWithRetry(apiKey, prompt) {
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  const { projectName, clientName, completed, nextSteps, issues, progress, language } = req.body;
+
+  const { projectName, clientName, completed, nextSteps, issues, progress, language, hasPhotos } = req.body;
   if (!completed || !nextSteps) return res.status(400).json({ error: "Missing required fields" });
+
   const langMap = { en: "English", ms: "Malay (Bahasa Malaysia)", zh: "Mandarin Chinese (Simplified)" };
   const langName = langMap[language] || "English";
   const today = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" });
-  const prompt = `Write a professional renovation progress WhatsApp update for Mushi Space Design Sdn Bhd.
-Project: ${projectName} | Client: ${clientName} | Date: ${today} | Progress: ${progress}%
-Language: ${langName}
-Completed: ${completed}
-Next: ${nextSteps}
-Issues: ${issues || "None"}
-Rules: Short, warm, professional. Use ✅ 🔨 ⚠️ 📊 emojis. Skip issues section if none. Natural ${langName}. No preamble. Start with client greeting.`;
+
+  const photoLine = hasPhotos
+    ? (language === "zh" ? "📷 请查看附上的工地照片。" : language === "ms" ? "📷 Sila lihat foto tapak yang dilampirkan." : "📷 Site photos are attached below.")
+    : "";
+
+  const prompt = `You are writing a WhatsApp renovation progress update message for Mushi Space Design Sdn Bhd to send to their client.
+
+Write the message in ${langName}. Be warm, professional, and easy to read on a phone.
+
+Project: ${projectName}
+Client name: ${clientName}
+Date: ${today}
+Overall progress: ${progress}%
+
+COMPLETED TODAY — include EVERY item listed below, do not skip or shorten anything:
+${completed}
+
+NEXT STEPS — include EVERY item listed below, do not skip or shorten anything:
+${nextSteps}
+
+${issues ? `DELAYS OR ISSUES — you MUST mention this:\n${issues}` : "No delays or issues."}
+
+${hasPhotos ? "PHOTOS: Site photos are attached. Include a line mentioning the photos." : ""}
+
+FORMAT RULES:
+- Start with a warm greeting using the client's name
+- Use 📊 for the progress percentage
+- Use ✅ for completed work — list ALL items from "COMPLETED TODAY", one per line
+- Use 🔨 for next steps — list ALL items from "NEXT STEPS", one per line
+- Use ⚠️ for delays or issues — include if there are any
+- ${hasPhotos ? "Use 📷 for the photo line" : ""}
+- End with a short reassuring closing line
+- Write naturally in ${langName}, not word-for-word translation
+- Do NOT summarize or shorten the completed work or next steps — use everything provided`;
+
   try {
     const message = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
-    return res.status(200).json({ message });
+    // Append photo line if not already included by AI
+    const finalMessage = hasPhotos && !message.includes("📷")
+      ? message.trim() + "\n\n" + photoLine
+      : message;
+    return res.status(200).json({ message: finalMessage });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
