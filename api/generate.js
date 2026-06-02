@@ -1,21 +1,20 @@
+// All use v1beta — widest model support on free Google AI Studio keys
 const MODELS = [
   "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-2.5-flash",
   "gemini-1.5-flash",
   "gemini-1.5-flash-8b",
-  "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey, model, prompt) {
-  const version = model.includes("1.5") ? "v1" : "v1beta";
-  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
-  const genConfig = { temperature: 0.4, maxOutputTokens: 8192 };
-  if (!model.includes("1.5")) genConfig.responseMimeType = "application/json";
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: genConfig,
+      generationConfig: { temperature: 0.4, maxOutputTokens: 8192 },
     }),
   });
   const data = await res.json();
@@ -25,25 +24,37 @@ async function callGemini(apiKey, model, prompt) {
   return raw;
 }
 
+function shouldTryNext(errMsg) {
+  const m = errMsg.toLowerCase();
+  return (
+    m.includes("quota") || m.includes("rate limit") || m.includes("resource_exhausted") ||
+    m.includes("429") || m.includes("503") || m.includes("overloaded") ||
+    m.includes("unavailable") || m.includes("high demand") ||
+    m.includes("not found") || m.includes("not support") || m.includes("404")
+  );
+}
+
 async function callWithRetry(apiKey, prompt) {
   let lastError;
   for (const model of MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const raw = await callGemini(apiKey, model, prompt);
-        return raw;
+        return await callGemini(apiKey, model, prompt);
       } catch (err) {
         lastError = err;
-        const msg = err.message?.toLowerCase() || "";
-        const isRetryable = msg.includes("overloaded") || msg.includes("503") || msg.includes("unavailable") || msg.includes("high demand");
-        const isQuotaHit = msg.includes("quota") || msg.includes("rate limit") || msg.includes("429") || msg.includes("resource_exhausted");
-        if (isRetryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
-        if (isRetryable || isQuotaHit) break;
-        throw err;
+        const retryable = err.message?.toLowerCase().includes("overloaded") ||
+                          err.message?.toLowerCase().includes("503");
+        if (retryable && attempt < 2) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        // Any model error — try next model
+        if (shouldTryNext(err.message || "")) break;
+        throw err; // only stop for real errors (bad request, invalid key, etc.)
       }
     }
   }
-  throw new Error("AI service is temporarily unavailable. Please wait a moment and try again.");
+  throw new Error("AI service is temporarily busy. Please wait a few seconds and try again.");
 }
 
 module.exports = async (req, res) => {
@@ -60,8 +71,8 @@ module.exports = async (req, res) => {
 
   const hasPrices = customPrices && Object.keys(customPrices).length > 0;
   const pricingBlock = hasPrices
-    ? `PRICING — use these EXACT amounts for line items:\n${Object.entries(customPrices).map(([k,v]) => `- ${k}: RM ${v}`).join("\n")}\nFor any selected work NOT listed above, estimate within the ${selTier} tier.`
-    : `Estimate all prices realistically within the ${selTier} tier (${tierRange}).`;
+    ? `PRICING — use these EXACT amounts:\n${Object.entries(customPrices).map(([k,v]) => `- ${k}: RM ${v}`).join("\n")}\nEstimate anything not listed within the ${selTier} tier.`
+    : `Estimate all prices within the ${selTier} tier (${tierRange}).`;
 
   const prompt = `You are writing a professional interior design & renovation proposal for Mushi Space Design Sdn Bhd, Kuching. Tagline: "Space - Style - Living".
 STRICT RULES:
@@ -85,7 +96,7 @@ Project:
 - Site: ${siteNotes || "Standard condition"}
 ${pricingBlock}
 Return ONLY valid JSON, no markdown, no backticks:
-{"refNo":"MSD-2026-XXX","intro":"1 sentence","understanding":"2 sentences","approach":"1 sentence","scopeItems":[{"room":"Room","works":"1-2 sentences for this room only"}],"inclusions":["4-5 short items"],"exclusions":["3-4 short items"],"lineItems":[{"item":"Work item","qty":"1","unit":"lot","amount":"RM XX,XXX"}],"subtotal":"RM XX,XXX","tax":"RM 0 (SST Exempt)","total":"RM XX,XXX","timeline":"X-X weeks","phases":[{"phase":"Name","duration":"X weeks","description":"1 sentence"}],"paymentSchedule":[{"milestone":"Upon signing","pct":"30%","amount":"RM XX,XXX"},{"milestone":"Upon design approval","pct":"40%","amount":"RM XX,XXX"},{"milestone":"Upon completion","pct":"30%","amount":"RM XX,XXX"}],"warranty":"12 months defect liability on workmanship","validity":"14 days from proposal date","closing":"1 sentence"}`;
+{"refNo":"MSD-2026-XXX","intro":"1 sentence","understanding":"2 sentences","approach":"1 sentence","scopeItems":[{"room":"Room","works":"1-2 sentences"}],"inclusions":["4-5 items"],"exclusions":["3-4 items"],"lineItems":[{"item":"Work item","qty":"1","unit":"lot","amount":"RM XX,XXX"}],"subtotal":"RM XX,XXX","tax":"RM 0 (SST Exempt)","total":"RM XX,XXX","timeline":"X-X weeks","phases":[{"phase":"Name","duration":"X weeks","description":"1 sentence"}],"paymentSchedule":[{"milestone":"Upon signing","pct":"30%","amount":"RM XX,XXX"},{"milestone":"Upon design approval","pct":"40%","amount":"RM XX,XXX"},{"milestone":"Upon completion","pct":"30%","amount":"RM XX,XXX"}],"warranty":"12 months defect liability on workmanship","validity":"14 days from proposal date","closing":"1 sentence"}`;
 
   try {
     const raw = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
