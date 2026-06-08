@@ -1892,23 +1892,22 @@ function prefillProposal(leadId){
   const lead=allLeads.find(l=>l.id===leadId);
   if(!lead)return;
 
-  // Navigate to proposals first
   nav("proposals");
 
-  // Pre-fill after a short tick for the view to mount
+  // Wait for page transition to fully complete (animation is 350ms)
   setTimeout(()=>{
-    // Basic info
+    // ── Basic info ──
     document.getElementById("clientName").value=lead.name||"";
     document.getElementById("clientPhone").value=lead.phone||"";
     document.getElementById("address").value=lead.address||"";
 
-    // Property type
+    // ── Property type ──
     const pt=document.getElementById("propType");
     for(let i=0;i<pt.options.length;i++){
       if(pt.options[i].text===lead.property_type){pt.selectedIndex=i;break;}
     }
 
-    // Budget → rough number + correct tier
+    // ── Budget + tier ──
     const budgetNumMap={
       "Under RM 30,000":"25000",
       "RM 30,000 – RM 60,000":"50000",
@@ -1930,22 +1929,39 @@ function prefillProposal(leadId){
       });
     }
 
-    // Pre-select rooms from lead
+    // ── Rooms ──
     selRooms=[];
     document.querySelectorAll("#roomGrid .chip").forEach(chip=>{
-      const match=(lead.rooms||[]).includes(chip.textContent);
+      const match=(lead.rooms||[]).includes(chip.textContent.trim());
       chip.classList.toggle("on",match);
-      if(match)selRooms.push(chip.textContent);
+      if(match)selRooms.push(chip.textContent.trim());
     });
 
-    // Move-in from start date
-    if(lead.start_date)document.getElementById("moveIn").value=lead.start_date;
+    // ── Works — auto-select sensible defaults based on rooms ──
+    // (intake form doesn't capture works, so we pick the most common ones)
+    const autoWorks=["Interior Design & Concept","Electrical Works","Painting & Finishes","Tiling & Flooring"];
+    const rooms=lead.rooms||[];
+    if(rooms.some(r=>r.includes("Kitchen")))autoWorks.push("Kitchen Cabinet & Countertop");
+    if(rooms.some(r=>r.includes("Bathroom")))autoWorks.push("Plumbing Works");
+    if(rooms.some(r=>r.includes("Bedroom")||r.includes("Study")))autoWorks.push("Wardrobe & Storage");
+    if(rooms.length>=4)autoWorks.push("False Ceiling & Lighting");
 
-    // Description → notes
+    selWorks=[];
+    document.querySelectorAll("#worksGrid .chip").forEach(chip=>{
+      const match=autoWorks.includes(chip.textContent.trim());
+      chip.classList.toggle("on",match);
+      if(match)selWorks.push(chip.textContent.trim());
+    });
+
+    // ── Move-in + notes ──
+    if(lead.start_date)document.getElementById("moveIn").value=lead.start_date;
     if(lead.project_description)document.getElementById("notes").value=lead.project_description;
 
-    showToast("Proposal form pre-filled from lead — review and generate","success");
-  },120);
+    // Scroll to top of form so user sees pre-filled name/phone
+    document.querySelector(".prop-left").scrollTo({top:0,behavior:"smooth"});
+
+    showToast("Form pre-filled — review works selection and generate","success");
+  },400);
 }
 
 async function markAsWon(id,name,phone,propertyType,address){
