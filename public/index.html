@@ -647,6 +647,46 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.success{border-left:3px solid var(--accent);}
 
+/* ── LEAD CARDS ── */
+.lead-card{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:16px;margin-bottom:10px;
+  box-shadow:var(--shadow-xs);transition:box-shadow .2s,transform .2s;
+  position:relative;overflow:hidden;
+}
+.lead-card:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
+.lead-card.hot{border-left:4px solid #C0392B;}
+.lead-card.warm{border-left:4px solid #C08B3A;}
+.lead-card.cold{border-left:4px solid #7A9BAE;}
+.lead-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;}
+.lead-name{font-size:14px;font-weight:700;letter-spacing:-.1px;}
+.lead-phone{font-size:11px;color:var(--txt2);margin-top:2px;}
+.lead-badge{
+  font-size:10px;font-weight:700;padding:3px 10px;
+  border-radius:20px;flex-shrink:0;white-space:nowrap;
+}
+.lead-badge.HOT{background:#FDECEA;color:#C0392B;border:1px solid rgba(192,57,43,0.2);}
+.lead-badge.WARM{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);}
+.lead-badge.COLD{background:rgba(122,155,174,0.1);color:#5A7A8E;border:1px solid rgba(122,155,174,0.25);}
+.lead-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;}
+.lead-meta-item{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;}
+.lead-meta-item i{color:var(--txt3);font-size:12px;}
+.lead-summary{
+  font-size:12px;color:var(--txt2);line-height:1.65;
+  padding:10px 12px;background:var(--bg);
+  border-radius:var(--radius-sm);border:1px solid var(--border);
+  margin-bottom:10px;font-style:italic;
+}
+.lead-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.lead-time{font-size:10px;color:var(--txt3);margin-left:auto;align-self:center;}
+.lead-stat-mini{
+  background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;text-align:center;
+  box-shadow:var(--shadow-xs);
+}
+.lead-stat-num{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:2px;}
+.lead-stat-lbl{font-size:10px;color:var(--txt3);font-weight:500;}
+
 /* ── MOBILE ── */
 @media(max-width:767px){
   :root{--sb-w:100%;}
@@ -720,6 +760,9 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
         <i class="bi bi-camera-fill"></i> Site Updates
       </div>
       <div class="sb-section">Manage</div>
+      <div class="sb-item" data-view="leads" onclick="nav('leads')">
+        <i class="bi bi-lightning-charge-fill"></i> Leads
+      </div>
       <div class="sb-item" data-view="history" onclick="nav('history')">
         <i class="bi bi-clock-history"></i> History
       </div>
@@ -993,6 +1036,36 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
       </div>
     </div>
 
+    <!-- LEADS -->
+    <div class="view" id="view-leads">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="page-title">Leads</div>
+          <div class="page-sub">Incoming enquiries — scored and ranked automatically</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" id="leadFilterAll" onclick="filterLeads('all')" style="border-color:var(--accent);color:var(--accent);">All</button>
+          <button class="btn btn-ghost btn-sm" id="leadFilterHot" onclick="filterLeads('HOT')">🔥 Hot</button>
+          <button class="btn btn-ghost btn-sm" id="leadFilterWarm" onclick="filterLeads('WARM')">Warm</button>
+          <button class="btn btn-ghost btn-sm" id="leadFilterCold" onclick="filterLeads('COLD')">Cold</button>
+        </div>
+      </div>
+      <div class="page-body">
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-body" style="padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:12px;color:var(--txt2);">Share this link with enquiries:</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <code style="font-size:11px;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:6px;border:1px solid var(--accent-border);">/intake</code>
+              <button class="btn btn-outline btn-sm" onclick="copyIntakeLink()"><i class="bi bi-link-45deg"></i> Copy Link</button>
+              <button class="btn btn-ghost btn-sm" onclick="openIntakeLink()"><i class="bi bi-box-arrow-up-right"></i> Preview</button>
+            </div>
+          </div>
+        </div>
+        <div id="leadStats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;"></div>
+        <div id="leadList"><div class="loading">Loading leads...</div></div>
+      </div>
+    </div>
+
     <!-- HISTORY -->
     <div class="view" id="view-history">
       <div class="page-header"><div class="page-title">Update History</div><div class="page-sub">All past updates sent to clients</div></div>
@@ -1136,7 +1209,7 @@ if(sessionStorage.getItem("authed")==="1"){document.getElementById("pw").style.d
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const viewTitles={dashboard:"Dashboard",proposals:"Proposals",updates:"Site Updates",history:"Update History",projects:"Projects"};
+const viewTitles={dashboard:"Dashboard",proposals:"Proposals",updates:"Site Updates",history:"Update History",projects:"Projects",leads:"Leads"};
 function nav(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById(`view-${view}`).classList.add("active");
@@ -1147,6 +1220,7 @@ function nav(view){
   if(view==="history")loadHistory();
   if(view==="projects")renderProjList();
   if(view==="dashboard")renderDashboard();
+  if(view==="leads")loadLeads();
 }
 function openSidebar(){document.getElementById("sidebar").classList.add("open");document.getElementById("sbOverlay").classList.add("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sbOverlay").classList.remove("open");}
@@ -1731,6 +1805,112 @@ document.addEventListener("DOMContentLoaded", () => {
   staggerIn(".stat-card");
   staggerIn(".qa-btn");
 });
+// ═══════════════════════════════════════
+// LEADS
+// ═══════════════════════════════════════
+let allLeads=[], leadFilter="all";
+
+async function loadLeads(){
+  const el=document.getElementById("leadList");
+  el.innerHTML=`<div class="loading">Loading leads...</div>`;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/leads?order=created_at.desc&limit=100`,{headers:SBH});
+    allLeads=await r.json();
+    renderLeads();
+    renderLeadStats();
+  }catch(e){el.innerHTML=`<div class="empty"><p>Failed to load leads.</p></div>`;}
+}
+
+function renderLeadStats(){
+  const hot=allLeads.filter(l=>l.score==="HOT").length;
+  const warm=allLeads.filter(l=>l.score==="WARM").length;
+  const cold=allLeads.filter(l=>l.score==="COLD").length;
+  const converted=allLeads.filter(l=>l.status==="converted").length;
+  document.getElementById("leadStats").innerHTML=`
+    <div class="lead-stat-mini"><div class="lead-stat-num" style="color:#C0392B;">${hot}</div><div class="lead-stat-lbl">Hot Leads</div></div>
+    <div class="lead-stat-mini"><div class="lead-stat-num" style="color:var(--accent);">${warm}</div><div class="lead-stat-lbl">Warm Leads</div></div>
+    <div class="lead-stat-mini"><div class="lead-stat-num" style="color:#5A7A8E;">${cold}</div><div class="lead-stat-lbl">Cold Leads</div></div>
+    <div class="lead-stat-mini"><div class="lead-stat-num" style="color:#5E8B5A;">${converted}</div><div class="lead-stat-lbl">Converted</div></div>`;
+}
+
+function filterLeads(f){
+  leadFilter=f;
+  document.querySelectorAll("#view-leads .btn-ghost").forEach(b=>{
+    b.style.borderColor=""; b.style.color="";
+  });
+  const activeBtn=document.getElementById("leadFilter"+f.charAt(0).toUpperCase()+f.slice(1).toLowerCase());
+  if(activeBtn){activeBtn.style.borderColor="var(--accent)";activeBtn.style.color="var(--accent)";}
+  renderLeads();
+}
+
+function renderLeads(){
+  const el=document.getElementById("leadList");
+  const filtered=leadFilter==="all"?allLeads:allLeads.filter(l=>l.score===leadFilter);
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon"><i class="bi bi-lightning-charge" style="color:var(--border2);font-size:32px;"></i></div><p>No ${leadFilter==="all"?"":leadFilter.toLowerCase()+" "}leads yet.<br/>Share your intake link to start receiving enquiries.</p></div>`;
+    return;
+  }
+  el.innerHTML=filtered.map((l,i)=>{
+    const date=new Date(l.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+    const scoreLabel={HOT:"Hot",WARM:"Warm",COLD:"Cold"}[l.score]||"Warm";
+    const rooms=(l.rooms||[]).slice(0,3).join(", ")+(l.rooms?.length>3?` +${l.rooms.length-3} more`:"");
+    const converted=l.status==="converted";
+    return`<div class="lead-card ${(l.score||"WARM").toLowerCase()} stagger" style="animation-delay:${i*50}ms;${converted?"opacity:0.55;":""}">
+      <div class="lead-top">
+        <div>
+          <div class="lead-name">${l.name||"Unknown"}${converted?" <span style='font-size:10px;color:var(--txt3);font-weight:400;'>(Converted)</span>":""}</div>
+          <div class="lead-phone">${l.phone||"—"}</div>
+        </div>
+        <span class="lead-badge ${l.score||"WARM"}">${scoreLabel}</span>
+      </div>
+      <div class="lead-meta">
+        ${l.property_type?`<span class="lead-meta-item"><i class="bi bi-building"></i>${l.property_type}</span>`:""}
+        ${l.address?`<span class="lead-meta-item"><i class="bi bi-geo-alt"></i>${l.address}</span>`:""}
+        ${l.budget_range?`<span class="lead-meta-item"><i class="bi bi-cash"></i>${l.budget_range}</span>`:""}
+        ${l.start_date?`<span class="lead-meta-item"><i class="bi bi-calendar3"></i>${l.start_date}</span>`:""}
+        ${rooms?`<span class="lead-meta-item"><i class="bi bi-house-door"></i>${rooms}</span>`:""}
+      </div>
+      ${l.ai_summary?`<div class="lead-summary">"${l.ai_summary}"</div>`:""}
+      <div class="lead-actions">
+        ${l.phone?`<button class="btn btn-primary btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\\'")}')"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
+        ${!converted?`<button class="btn btn-outline btn-sm" onclick="convertLead('${l.id}','${(l.name||"").replace(/'/g,"\\'")}','${(l.phone||"").replace(/'/g,"\\'")}','${(l.property_type||"").replace(/'/g,"\\'")}','${(l.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-arrow-right-circle"></i> Convert to Project</button>`:""}
+        <span class="lead-time">${date}${l.referral_source?" · via "+l.referral_source:""}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function waLead(phone, name){
+  const ph=phone.replace(/[^0-9]/g,"");
+  const intl=ph.startsWith("0")?"6"+ph:ph;
+  const msg=`Hi ${name}! Thank you for your enquiry with Mushi Space Design. We've reviewed your project details and would love to chat. When is a good time to connect? — Mushi Space Design Team`;
+  window.open(`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`,"_blank");
+}
+
+async function convertLead(id, name, phone, propertyType, address){
+  if(!confirm(`Convert "${name}" to a project? This will create a new project with their details pre-filled.`))return;
+  try{
+    // Create project from lead
+    const r=await fetch("/api/projects",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:`${name} — ${propertyType||"Project"}`,client_name:name,client_phone:phone,address:address})});
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    // Mark lead as converted
+    await fetch(`${SB_URL}/rest/v1/leads?id=eq.${id}`,{method:"PATCH",headers:{...SBH,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({status:"converted"})});
+    await loadProjects();
+    await loadLeads();
+    showToast(`${name} converted to project`, "success");
+    setTimeout(()=>nav("projects"),1200);
+  }catch(e){showToast("Failed to convert: "+e.message);}
+}
+
+function copyIntakeLink(){
+  const link=window.location.origin+"/intake.html";
+  navigator.clipboard.writeText(link).then(()=>showToast("Intake link copied — share it with enquiries","success"));
+}
+
+function openIntakeLink(){
+  window.open(window.location.origin+"/intake.html","_blank");
+}
 
 </script>
 </body>
