@@ -1872,8 +1872,9 @@ function renderLeads(){
       </div>
       ${l.ai_summary?`<div class="lead-summary">"${l.ai_summary}"</div>`:""}
       <div class="lead-actions">
-        ${l.phone?`<button class="btn btn-primary btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\\'")}')"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
-        ${!converted?`<button class="btn btn-outline btn-sm" onclick="convertLead('${l.id}','${(l.name||"").replace(/'/g,"\\'")}','${(l.phone||"").replace(/'/g,"\\'")}','${(l.property_type||"").replace(/'/g,"\\'")}','${(l.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-arrow-right-circle"></i> Convert to Project</button>`:""}
+        ${l.phone?`<button class="btn btn-ghost btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\\'")}')"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
+        ${!converted?`<button class="btn btn-primary btn-sm" onclick="prefillProposal('${l.id}')"><i class="bi bi-stars"></i> Generate Proposal &rarr;</button>`:""}
+        ${!converted?`<button class="btn btn-ghost btn-sm" onclick="markAsWon('${l.id}','${(l.name||"").replace(/'/g,"\\'")}','${(l.phone||"").replace(/'/g,"\\'")}','${(l.property_type||"").replace(/'/g,"\\'")}','${(l.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-check2-circle"></i> Mark as Won</button>`:`<span style="font-size:11px;color:var(--txt3);font-weight:500;"><i class="bi bi-check2-circle"></i> Converted to project</span>`}
         <span class="lead-time">${date}${l.referral_source?" · via "+l.referral_source:""}</span>
       </div>
     </div>`;
@@ -1887,20 +1888,78 @@ function waLead(phone, name){
   window.open(`https://wa.me/${intl}?text=${encodeURIComponent(msg)}`,"_blank");
 }
 
-async function convertLead(id, name, phone, propertyType, address){
-  if(!confirm(`Convert "${name}" to a project? This will create a new project with their details pre-filled.`))return;
+function prefillProposal(leadId){
+  const lead=allLeads.find(l=>l.id===leadId);
+  if(!lead)return;
+
+  // Navigate to proposals first
+  nav("proposals");
+
+  // Pre-fill after a short tick for the view to mount
+  setTimeout(()=>{
+    // Basic info
+    document.getElementById("clientName").value=lead.name||"";
+    document.getElementById("clientPhone").value=lead.phone||"";
+    document.getElementById("address").value=lead.address||"";
+
+    // Property type
+    const pt=document.getElementById("propType");
+    for(let i=0;i<pt.options.length;i++){
+      if(pt.options[i].text===lead.property_type){pt.selectedIndex=i;break;}
+    }
+
+    // Budget → rough number + correct tier
+    const budgetNumMap={
+      "Under RM 30,000":"25000",
+      "RM 30,000 – RM 60,000":"50000",
+      "RM 60,000 – RM 120,000":"90000",
+      "Above RM 120,000":"150000",
+    };
+    const tierMap={
+      "Under RM 30,000":"Essential",
+      "RM 30,000 – RM 60,000":"Essential",
+      "RM 60,000 – RM 120,000":"Signature",
+      "Above RM 120,000":"Prestige",
+    };
+    if(lead.budget_range){
+      if(budgetNumMap[lead.budget_range])document.getElementById("budget").value=budgetNumMap[lead.budget_range];
+      const targetTier=tierMap[lead.budget_range]||"Signature";
+      selTier=targetTier;
+      document.querySelectorAll(".tier-btn").forEach(b=>{
+        b.classList.toggle("on",b.querySelector(".tier-name")?.textContent===targetTier);
+      });
+    }
+
+    // Pre-select rooms from lead
+    selRooms=[];
+    document.querySelectorAll("#roomGrid .chip").forEach(chip=>{
+      const match=(lead.rooms||[]).includes(chip.textContent);
+      chip.classList.toggle("on",match);
+      if(match)selRooms.push(chip.textContent);
+    });
+
+    // Move-in from start date
+    if(lead.start_date)document.getElementById("moveIn").value=lead.start_date;
+
+    // Description → notes
+    if(lead.project_description)document.getElementById("notes").value=lead.project_description;
+
+    showToast("Proposal form pre-filled from lead — review and generate","success");
+  },120);
+}
+
+async function markAsWon(id,name,phone,propertyType,address){
+  if(!confirm(`Mark "${name}" as won and create a project?\n\nOnly do this after the client has agreed and paid their deposit.`))return;
   try{
-    // Create project from lead
     const r=await fetch("/api/projects",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:`${name} — ${propertyType||"Project"}`,client_name:name,client_phone:phone,address:address})});
     const d=await r.json();
     if(d.error)throw new Error(d.error);
-    // Mark lead as converted
     await fetch(`${SB_URL}/rest/v1/leads?id=eq.${id}`,{method:"PATCH",headers:{...SBH,"Content-Type":"application/json","Prefer":"return=minimal"},body:JSON.stringify({status:"converted"})});
     await loadProjects();
     await loadLeads();
-    showToast(`${name} converted to project`, "success");
+    showToast(`${name} — project created successfully`,"success");
     setTimeout(()=>nav("projects"),1200);
-  }catch(e){showToast("Failed to convert: "+e.message);}
+  }catch(e){showToast("Failed: "+e.message);}
 }
 
 function copyIntakeLink(){
