@@ -724,7 +724,7 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
     <h2>Mushi OS</h2>
     <p>Internal platform — Mushi Space Design Sdn Bhd</p>
     <div class="pw-input-wrap">
-      <input type="password" id="pwIn" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkPw()"/>
+      <input type="password" id="pwIn" placeholder="Enter password"/>
     </div>
     <button id="pwBtn" onclick="checkPw()">Enter</button>
     <div class="pw-err" id="pwErr">Wrong password. Please try again.</div>
@@ -1281,7 +1281,19 @@ async function checkPw(){
     else{document.getElementById("pwErr").style.display="block";btn.textContent="Enter";btn.disabled=false;document.getElementById("pwIn").value="";}
   }catch(e){document.getElementById("pwErr").textContent="Error. Try again.";document.getElementById("pwErr").style.display="block";btn.textContent="Enter";btn.disabled=false;}
 }
-if(sessionStorage.getItem("authed")==="1"){document.getElementById("pw").style.display="none";document.getElementById("app").style.display="block";window.addEventListener("DOMContentLoaded",init);}
+if(sessionStorage.getItem("authed")==="1"){
+  document.getElementById("pw").style.display="none";
+  document.getElementById("app").style.display="block";
+  // DOMContentLoaded already fired — call init directly
+  init();
+}
+
+// Robust Enter key handler for password field — covers keydown + keyup
+["keydown","keyup"].forEach(evt=>{
+  document.getElementById("pwIn").addEventListener(evt,function(e){
+    if(e.key==="Enter"||e.keyCode===13){e.preventDefault();checkPw();}
+  });
+});
 
 // ═══════════════════════════════════════
 // NAVIGATION
