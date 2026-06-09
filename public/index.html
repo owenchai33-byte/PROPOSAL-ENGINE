@@ -2140,31 +2140,60 @@ function renderDashboard(){
   initSpotlight();
 }
 
-// Override renderProjList to use new HTML structure
+// Override renderProjList — with invoice button
 function renderProjList(){
   const el = document.getElementById("projList");
   if(!projects.length){
-    el.innerHTML = "<div class=\"empty\"><div class=\"empty-icon\"><i class=\"bi bi-buildings\" style=\"color:var(--border2);font-size:32px;\"></i></div><p>No projects yet. Add your first project.</p></div>";
+    el.innerHTML = `<div class="empty"><div class="empty-icon"><i class="bi bi-buildings" style="color:var(--border2);font-size:32px;"></i></div><p>No projects yet. Add your first project.</p></div>`;
     return;
   }
-  el.innerHTML = projects.map(p => {
+  el.innerHTML = projects.map((p,idx) => {
     const active = !!p.portal_active;
     const lang = p.portal_language || "en";
-    const safeName = (p.name||"").replace(/'/g, "\\'");
-    const safeClient = (p.client_name||"").replace(/'/g, "\\'");
-    return "<div class=\"proj-card-wrap stagger\">" +
-      "<div class=\"proj-card-inner spotlight\" onclick=\"goToUpdate('"+p.id+"')\"><div class=\"proj-info\"><div class=\"proj-name\">"+p.name+"</div><div class=\"proj-meta\">"+p.client_name+(p.client_phone?" &middot; "+p.client_phone:"")+(p.address?" &middot; "+p.address:"")+"</div><div class=\"prog-bar\"><div class=\"prog-fill\" style=\"width:"+(p.progress||0)+"%\"></div></div></div><div class=\"proj-right\"><div class=\"prog-num\">"+(p.progress||0)+"%</div><div class=\"prog-lbl\">progress</div><div class=\"proj-actions\"><button class=\"btn btn-ghost btn-icon\" onclick=\"event.stopPropagation();delProj('"+p.id+"','"+safeName+"')\"><i class=\"bi bi-x-lg\"></i></button></div></div></div>" +
-      "<div class=\"portal-bar\" onclick=\"event.stopPropagation()\"><div class=\"portal-left\"><div class=\"portal-dot "+(active?"on":"")+"\"></div><span class=\"portal-label\">Client Portal</span><span class=\"portal-badge "+(active?"on":"off")+"\"><i class=\"bi "+(active?"bi-check-circle-fill":"bi-circle")+"\" style=\"margin-right:3px;\"></i>"+(active?"Active":"Off")+"</span></div><div class=\"portal-right\">"+
-      (active ?
-        "<div class=\"portal-langs\"><button class=\"plang "+(lang==="en"?"on":"")+"\" onclick=\"setPortalLang('"+p.id+"','en')\">EN</button><button class=\"plang "+(lang==="ms"?"on":"")+"\" onclick=\"setPortalLang('"+p.id+"','ms')\">MY</button><button class=\"plang "+(lang==="zh"?"on":"")+"\" onclick=\"setPortalLang('"+p.id+"','zh')\">ZH</button></div><button class=\"btn btn-ghost btn-sm\" onclick=\"copyPortalLink('"+p.id+"')\"><i class=\"bi bi-link-45deg\"></i> Copy Link</button><button class=\"btn btn-ghost btn-sm\" onclick=\"sharePortalWA('"+p.id+"','"+safeClient+"','"+encodeURIComponent(p.client_phone||"")+"')\"><i class=\"bi bi-whatsapp\"></i></button><button class=\"btn btn-ghost btn-sm\" style=\"color:var(--txt3);\" onclick=\"togglePortal('"+p.id+"',false)\">Deactivate</button>" :
-        "<button class=\"btn btn-outline btn-sm\" onclick=\"togglePortal('"+p.id+"',true)\">Enable Portal &rarr;</button>"
-      ) +
-      "</div></div></div>";
+    const safeName = (p.name||"").replace(/'/g, "\'");
+    const safeClient = (p.client_name||"").replace(/'/g, "\'");
+    const safePhone = (p.client_phone||"").replace(/'/g, "\'");
+    const safeAddr = (p.address||"").replace(/'/g, "\'");
+    return `<div class="proj-card-wrap stagger" style="animation-delay:${idx*60}ms;">
+      <div class="proj-card-inner spotlight" onclick="goToUpdate('${p.id}')">
+        <div class="proj-info">
+          <div class="proj-name">${p.name}</div>
+          <div class="proj-meta">${p.client_name}${p.client_phone?" · "+p.client_phone:""}${p.address?" · "+p.address:""}</div>
+          <div class="prog-bar"><div class="prog-fill" style="width:${p.progress||0}%"></div></div>
+        </div>
+        <div class="proj-right">
+          <div class="prog-num">${p.progress||0}%</div>
+          <div class="prog-lbl">progress</div>
+          <div class="proj-actions">
+            <button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();delProj('${p.id}','${safeName}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>
+      </div>
+      <div class="portal-bar" onclick="event.stopPropagation()">
+        <div class="portal-left">
+          <div class="portal-dot ${active?"on":""}"></div>
+          <span class="portal-label">Client Portal</span>
+          <span class="portal-badge ${active?"on":"off"}"><i class="bi ${active?"bi-check-circle-fill":"bi-circle"}" style="margin-right:3px;"></i>${active?"Active":"Off"}</span>
+        </div>
+        <div class="portal-right">
+          ${active?`<div class="portal-langs">
+              <button class="plang ${lang==="en"?"on":""}" onclick="setPortalLang('${p.id}','en')">EN</button>
+              <button class="plang ${lang==="ms"?"on":""}" onclick="setPortalLang('${p.id}','ms')">MY</button>
+              <button class="plang ${lang==="zh"?"on":""}" onclick="setPortalLang('${p.id}','zh')">中</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${p.id}')"><i class="bi bi-link-45deg"></i> Copy Link</button>
+            <button class="btn btn-ghost btn-sm" onclick="sharePortalWA('${p.id}','${safeClient}','${encodeURIComponent(p.client_phone||"")}')"><i class="bi bi-whatsapp"></i></button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--txt3);" onclick="togglePortal('${p.id}',false)">Deactivate</button>`
+          :`<button class="btn btn-outline btn-sm" onclick="togglePortal('${p.id}',true)">Enable Portal →</button>`}
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleInvPanel('${p.id}')"><i class="bi bi-receipt"></i> Invoices</button>
+        </div>
+      </div>
+      <div class="inv-panel" id="inv-${p.id}" onclick="event.stopPropagation()">
+        <div class="inv-list" id="invlist-${p.id}"><div style="font-size:12px;color:var(--txt3);text-align:center;padding:10px;">Loading...</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openNewInvoice('${p.id}','${safeName}','${safeClient}','${safePhone}','${safeAddr}')"><i class="bi bi-plus-lg"></i> New Invoice</button>
+      </div>
+    </div>`;
   }).join("");
-
-  // Apply stagger and spotlight to new items
-  const items = el.querySelectorAll(".proj-card-wrap.stagger");
-  items.forEach((item, i) => { item.style.animationDelay = (i * 60) + "ms"; });
   initSpotlight();
 }
 
