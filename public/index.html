@@ -1480,59 +1480,206 @@ function renderProposal(p,m){
 // ═══════════════════════════════════════
 function exportPDF(){
   if(!lastProposal||!window.jspdf)return;
-  const{jsPDF}=window.jspdf;const p=lastProposal,m=lastMeta;
+  const{jsPDF}=window.jspdf;
+  const p=lastProposal,m=lastMeta;
   const today=new Date().toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
   const doc=new jsPDF({unit:"mm",format:"a4"});
-  const W=210,L=14,R=14,CW=W-L-R;let y=0;
-  const hr=(c=[220,220,220])=>{doc.setDrawColor(...c);doc.setLineWidth(0.2);doc.line(L,y,W-R,y);};
-  const ST=t=>{y+=5;doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);doc.text(t.toUpperCase(),L,y);y+=2.5;hr();y+=3;};
-  const BD=(t,col=[50,50,50],sz=8)=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);const ls=doc.splitTextToSize(t,CW);doc.text(ls,L,y);y+=ls.length*4.2+0.5;};
-  doc.setFillColor(15,15,15);doc.rect(0,0,W,22,"F");
-  doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);doc.text("MUSHI SPACE DESIGN SDN BHD",L,10);
-  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
-  doc.text("Space  ·  Style  ·  Living",L,16);doc.text("019-283 8686  ·  @mushispacedesign",W-R,10,{align:"right"});
-  doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  ${today}  ·  Valid: ${p.validity}`,W-R,16,{align:"right"});
-  y=30;doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(15,15,15);doc.text("Design & Renovation Proposal",L,y);y+=5;
+  const W=210,L=14,R=14,CW=W-L-R,BOTTOM=274;
+  let y=0,pageNum=1;
+
+  function drawMainHeader(){
+    doc.setFillColor(15,15,15);doc.rect(0,0,W,22,"F");
+    doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");doc.setFontSize(9);
+    doc.text("MUSHI SPACE DESIGN SDN BHD",L,10);
+    doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
+    doc.text("Space  ·  Style  ·  Living",L,16);
+    doc.text("019-283 8686  ·  @mushispacedesign",W-R,10,{align:"right"});
+    doc.text(`Ref: ${p.refNo||"MSD-2026"}  ·  ${today}  ·  Valid: ${p.validity}`,W-R,16,{align:"right"});
+  }
+
+  function drawContHeader(){
+    doc.setFillColor(15,15,15);doc.rect(0,0,W,11,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(255,255,255);
+    doc.text("MUSHI SPACE DESIGN SDN BHD",L,7.5);
+    doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(170,170,170);
+    doc.text(`Design & Renovation Proposal  ·  ${m.clientName}  ·  Page ${pageNum}`,W-R,7.5,{align:"right"});
+  }
+
+  function drawFooter(){
+    doc.setFillColor(15,15,15);doc.rect(0,283,W,14,"F");
+    doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(255,255,255);
+    doc.text("Mushi Space Design Sdn Bhd",L,290);
+    doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(170,170,170);
+    doc.text("Space · Style · Living  ·  019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,294.5);
+    doc.setTextColor(110,110,110);
+    doc.text(`Page ${pageNum}`,W-R,290,{align:"right"});
+  }
+
+  function newPage(){
+    drawFooter();doc.addPage();pageNum++;drawContHeader();y=16;
+  }
+
+  function check(needed){if(y+(needed||10)>BOTTOM)newPage();}
+
+  function hr(c){
+    c=c||[220,220,220];doc.setDrawColor(...c);doc.setLineWidth(0.2);doc.line(L,y,W-R,y);
+  }
+
+  function ST(t){
+    check(10);y+=5;
+    doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);
+    doc.text(t.toUpperCase(),L,y);y+=2.5;hr();y+=3;
+  }
+
+  function BD(t,col,sz){
+    col=col||[50,50,50];sz=sz||8;
+    const ls=doc.splitTextToSize(t,CW);
+    check(ls.length*4.2+2);
+    doc.setFont("helvetica","normal");doc.setFontSize(sz);doc.setTextColor(...col);
+    doc.text(ls,L,y);y+=ls.length*4.2+0.5;
+  }
+
+  // --- PAGE 1 HEADER ---
+  drawMainHeader();
+  y=30;
+  doc.setFont("helvetica","bold");doc.setFontSize(14);doc.setTextColor(15,15,15);
+  doc.text("Design & Renovation Proposal",L,y);y+=5;
   doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(80,80,80);
-  doc.text(`${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}  ·  ${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`,L,y);y+=2;hr([200,200,200]);y+=1;
-  ST("Overview");BD(p.intro);y+=1;BD(p.understanding,[80,80,80]);y+=1;BD(p.approach,[80,80,80]);
+  const metaStr=`${m.clientName}${m.clientPhone?" · "+m.clientPhone:""}  ·  ${m.propType}${m.propSize?" · "+m.propSize+" sq ft":""}  ·  ${m.address}`;
+  const metaLines=doc.splitTextToSize(metaStr,CW);
+  doc.text(metaLines,L,y);y+=metaLines.length*4+1;
+  hr([200,200,200]);y+=1;
+
+  // --- OVERVIEW ---
+  ST("Overview");
+  BD(p.intro);y+=1;BD(p.understanding,[80,80,80]);y+=1;BD(p.approach,[80,80,80]);
+
+  // --- SCOPE ---
   ST("Scope of Works");
-  (p.scopeItems||[]).forEach((s,i)=>{doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(20,20,20);doc.text(s.room,L,y);y+=3.5;const wl=doc.splitTextToSize(s.works,CW);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);doc.text(wl,L,y);y+=wl.length*4+2;if(i<(p.scopeItems.length-1)){hr([240,240,240]);y+=2;}});
-  ST("Estimated Investment  &  Payment Schedule");
-  const hCW=(CW-6)/2,tsY=y;
-  doc.setFillColor(245,245,245);doc.rect(L,y-1,hCW,5.5,"F");
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);doc.text("Item",L+1,y+3);doc.text("Amount",L+hCW-1,y+3,{align:"right"});y+=7;
-  (p.lineItems||[]).forEach((l,i)=>{if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-1,hCW,5.5,"F");}doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);const t=doc.splitTextToSize(l.item,hCW-20);doc.text(t[0],L+1,y+3);doc.text(l.amount,L+hCW-1,y+3,{align:"right"});y+=5.5;});
-  y+=1;doc.setDrawColor(160,160,160);doc.setLineWidth(0.3);doc.line(L,y,L+hCW,y);y+=3.5;
-  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);doc.text("Subtotal",L+1,y);doc.text(p.subtotal,L+hCW-1,y,{align:"right"});y+=4;doc.text("SST",L+1,y);doc.text(p.tax,L+hCW-1,y,{align:"right"});y+=4;
-  doc.setDrawColor(15,15,15);doc.setLineWidth(0.4);doc.line(L,y,L+hCW,y);y+=4;
-  doc.setFont("helvetica","bold");doc.setFontSize(9);doc.setTextColor(15,15,15);doc.text("Total",L+1,y);doc.text(p.total,L+hCW-1,y,{align:"right"});const lEY=y+4;
-  let ry=tsY;const rx=L+hCW+6,rw=hCW;
-  doc.setFillColor(245,245,245);doc.rect(rx,ry-1,rw,5.5,"F");doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);doc.text("Payment Milestone",rx+1,ry+3);doc.text("Amount",rx+rw-1,ry+3,{align:"right"});ry+=7;
-  (p.paymentSchedule||[]).forEach((pm,i)=>{if(i%2===0){doc.setFillColor(251,251,251);doc.rect(rx,ry-1,rw,5.5,"F");}doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);doc.text(`${pm.milestone} (${pm.pct})`,rx+1,ry+3);doc.text(pm.amount,rx+rw-1,ry+3,{align:"right"});ry+=5.5;});
-  ry+=3;doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(160,160,160);doc.text(`TIMELINE — ${p.timeline}`.toUpperCase(),rx,ry);ry+=2.5;doc.setDrawColor(220,220,220);doc.setLineWidth(0.2);doc.line(rx,ry,rx+rw,ry);ry+=3;
-  (p.phases||[]).forEach((ph,i)=>{doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text(`${i+1}. ${ph.phase}`,rx+1,ry);doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(140,140,140);doc.text(ph.duration,rx+rw-1,ry,{align:"right"});ry+=3.5;const dl=doc.splitTextToSize(ph.description,rw-2);doc.setFontSize(7);doc.setTextColor(110,110,110);doc.text(dl,rx+1,ry);ry+=dl.length*3.5+2;});
-  y=Math.max(lEY,ry)+3;
+  (p.scopeItems||[]).forEach((s,i)=>{
+    const wl=doc.splitTextToSize(s.works,CW);
+    check(3.5+wl.length*4+4);
+    doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(20,20,20);
+    doc.text(s.room,L,y);y+=3.5;
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);
+    doc.text(wl,L,y);y+=wl.length*4+2;
+    if(i<(p.scopeItems||[]).length-1){check(4);hr([240,240,240]);y+=2;}
+  });
+
+  // --- INVESTMENT ---
+  ST("Estimated Investment");
+  check(12);
+  doc.setFillColor(245,245,245);doc.rect(L,y-1,CW,5.5,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
+  doc.text("Item",L+1,y+3);doc.text("Qty",L+CW*0.62,y+3,{align:"center"});
+  doc.text("Amount",L+CW-1,y+3,{align:"right"});y+=7;
+  (p.lineItems||[]).forEach((l,i)=>{
+    check(6);
+    if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-1,CW,5.5,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
+    const tl=doc.splitTextToSize(l.item,CW*0.55);
+    doc.text(tl[0],L+1,y+3);
+    doc.setTextColor(100,100,100);doc.text(`${l.qty} ${l.unit}`,L+CW*0.62,y+3,{align:"center"});
+    doc.setTextColor(40,40,40);doc.text(l.amount,L+CW-1,y+3,{align:"right"});y+=5.5;
+  });
+  check(20);y+=1;
+  doc.setDrawColor(160,160,160);doc.setLineWidth(0.3);doc.line(L,y,W-R,y);y+=3.5;
+  doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(100,100,100);
+  doc.text("Subtotal",L+1,y);doc.text(p.subtotal,W-R-1,y,{align:"right"});y+=4;
+  doc.text("SST",L+1,y);doc.text(p.tax,W-R-1,y,{align:"right"});y+=4;
+  doc.setDrawColor(15,15,15);doc.setLineWidth(0.5);doc.line(L,y,W-R,y);y+=5;
+  doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(15,15,15);
+  doc.text("TOTAL",L+1,y);doc.text(p.total,W-R-1,y,{align:"right"});y+=7;
+
+  // --- PAYMENT SCHEDULE ---
+  ST("Payment Schedule");
+  check(12);
+  doc.setFillColor(245,245,245);doc.rect(L,y-1,CW,5.5,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(100,100,100);
+  doc.text("Milestone",L+1,y+3);doc.text("Percentage",L+CW*0.65,y+3,{align:"center"});
+  doc.text("Amount",L+CW-1,y+3,{align:"right"});y+=7;
+  (p.paymentSchedule||[]).forEach((pm,i)=>{
+    check(6);
+    if(i%2===0){doc.setFillColor(251,251,251);doc.rect(L,y-1,CW,5.5,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(40,40,40);
+    doc.text(pm.milestone,L+1,y+3);
+    doc.setTextColor(100,100,100);doc.text(pm.pct,L+CW*0.65,y+3,{align:"center"});
+    doc.setTextColor(40,40,40);doc.text(pm.amount,L+CW-1,y+3,{align:"right"});y+=5.5;
+  });
+  y+=4;
+
+  // --- TIMELINE ---
+  ST(`Timeline — ${p.timeline}`);
+  (p.phases||[]).forEach((ph,i)=>{
+    const dl=doc.splitTextToSize(ph.description,CW-6);
+    check(3.5+dl.length*3.5+4);
+    doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);
+    doc.text(`${i+1}. ${ph.phase}`,L+1,y);
+    doc.setFont("helvetica","normal");doc.setFontSize(6.5);doc.setTextColor(140,140,140);
+    doc.text(ph.duration,W-R-1,y,{align:"right"});y+=3.5;
+    doc.setFontSize(7);doc.setTextColor(110,110,110);doc.text(dl,L+4,y);y+=dl.length*3.5+3;
+  });
+
+  // --- INCLUSIONS & EXCLUSIONS ---
   ST("Inclusions & Exclusions");
-  const iex=(CW-6)/2;let iy=y,ey=y;
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("INCLUDED",L,iy);iy+=3;
-  (p.inclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(50,50,50);doc.text("+ "+x,L,iy);iy+=4;});
-  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(80,80,80);doc.text("NOT INCLUDED",L+iex+6,ey);ey+=3;
-  (p.exclusions||[]).forEach(x=>{doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(150,150,150);doc.text("- "+x,L+iex+6,ey);ey+=4;});
-  y=Math.max(iy,ey)+4;
-  hr([200,200,200]);y+=4;doc.setFont("helvetica","italic");doc.setFontSize(7.5);doc.setTextColor(120,120,120);const cl=doc.splitTextToSize(p.closing,CW);doc.text(cl,L,y);y+=cl.length*4+3;
-  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);doc.text(`Warranty: ${p.warranty}  ·  Style: ${m.selStyle||"TBC"}  ·  Package: ${m.selTier}`,L,y);y+=8;
-  hr([200,200,200]);y+=5;doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);doc.text("ACCEPTANCE & AUTHORIZATION",L,y);y+=6;
+  const hW=(CW-6)/2;
+  const inclLines=(p.inclusions||[]).length;
+  const exclLines=(p.exclusions||[]).length;
+  check(Math.max(inclLines,exclLines)*4+8);
+  const ieY=y;
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(60,60,60);
+  doc.text("INCLUDED",L,y);y+=4;
+  (p.inclusions||[]).forEach(x=>{
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(50,50,50);
+    doc.text("+ "+x,L,y);y+=4;
+  });
+  let ey=ieY;
+  doc.setFont("helvetica","bold");doc.setFontSize(7);doc.setTextColor(60,60,60);
+  doc.text("NOT INCLUDED",L+hW+6,ey);ey+=4;
+  (p.exclusions||[]).forEach(x=>{
+    doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(150,150,150);
+    doc.text("- "+x,L+hW+6,ey);ey+=4;
+  });
+  y=Math.max(y,ey)+5;
+
+  // --- CLOSING ---
+  check(14);hr([200,200,200]);y+=4;
+  doc.setFont("helvetica","italic");doc.setFontSize(7.5);doc.setTextColor(120,120,120);
+  const cl=doc.splitTextToSize(p.closing,CW);
+  check(cl.length*4+3);doc.text(cl,L,y);y+=cl.length*4+3;
+  check(6);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(150,150,150);
+  doc.text(`Warranty: ${p.warranty}  ·  Style: ${m.selStyle||"TBC"}  ·  Package: ${m.selTier}`,L,y);y+=8;
+
+  // --- SIGNATURE — always fits on same page ---
+  check(52);
+  hr([200,200,200]);y+=5;
+  doc.setFont("helvetica","bold");doc.setFontSize(6.5);doc.setTextColor(160,160,160);
+  doc.text("ACCEPTANCE & AUTHORIZATION",L,y);y+=6;
   const sigW=(CW-10)/2;
-  doc.setFillColor(250,250,250);doc.rect(L,y,sigW,32,"F");doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(L,y,sigW,32,"S");
+  // Client
+  doc.setFillColor(250,250,250);doc.rect(L,y,sigW,32,"F");
+  doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(L,y,sigW,32,"S");
   doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text("Accepted by Client",L+3,y+6);
-  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.line(L+3,y+18,L+sigW-3,y+18);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);doc.text("Signature",L+3,y+21);doc.line(L+3,y+26,L+sigW-3,y+26);doc.text("Full Name / I/C No.",L+3,y+29);
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
+  doc.line(L+3,y+18,L+sigW-3,y+18);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);
+  doc.text("Signature",L+3,y+21);doc.line(L+3,y+26,L+sigW-3,y+26);doc.text("Full Name / I/C No.",L+3,y+29);
+  // Mushi
   const rx2=L+sigW+10;
-  doc.setFillColor(250,250,250);doc.rect(rx2,y,sigW,32,"F");doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(rx2,y,sigW,32,"S");
+  doc.setFillColor(250,250,250);doc.rect(rx2,y,sigW,32,"F");
+  doc.setDrawColor(220,220,220);doc.setLineWidth(0.3);doc.rect(rx2,y,sigW,32,"S");
   doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(30,30,30);doc.text("Authorized by Mushi Space Design",rx2+3,y+6);
-  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);doc.line(rx2+3,y+18,rx2+sigW-3,y+18);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);doc.text("Signature & Stamp",rx2+3,y+21);doc.line(rx2+3,y+26,rx2+sigW-3,y+26);doc.text("Name / Designation",rx2+3,y+29);
-  y+=32;y+=4;doc.text("Date: ___________________",L+3,y);doc.text("Date: ___________________",rx2+3,y);y+=8;
-  doc.setFillColor(15,15,15);doc.rect(0,y,W,14,"F");doc.setFont("helvetica","bold");doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text("Mushi Space Design Sdn Bhd",L,y+6);doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);doc.text("Space · Style · Living  ·  019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,y+11);
+  doc.setDrawColor(180,180,180);doc.setLineWidth(0.3);
+  doc.line(rx2+3,y+18,rx2+sigW-3,y+18);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(130,130,130);
+  doc.text("Signature & Stamp",rx2+3,y+21);doc.line(rx2+3,y+26,rx2+sigW-3,y+26);doc.text("Name / Designation",rx2+3,y+29);
+  y+=32;y+=4;
+  doc.text("Date: ___________________",L+3,y);doc.text("Date: ___________________",rx2+3,y);y+=8;
+
+  // Final footer
+  drawFooter();
+
   doc.save(`Mushi_Proposal_${m.clientName.replace(/[^a-zA-Z0-9]/g,"_")}_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
