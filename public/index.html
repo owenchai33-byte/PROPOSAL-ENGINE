@@ -1117,6 +1117,83 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
   </div>
 </div>
 
+<!-- LEAD DETAIL MODAL -->
+<div class="modal-ov" id="leadModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="modal-title" id="leadModalName">Lead Details</span>
+        <span class="lead-badge" id="leadModalBadge"></span>
+      </div>
+      <button class="modal-x" onclick="closeLeadModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body" style="max-height:70vh;overflow-y:auto;">
+
+      <!-- AI Summary -->
+      <div id="leadModalSummary" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--txt2);line-height:1.7;font-style:italic;"></div>
+
+      <!-- Contact -->
+      <div class="sec-label" style="margin-top:0;">Contact</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Name</div>
+          <div style="font-size:13px;font-weight:600;" id="ldName">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">WhatsApp</div>
+          <div style="font-size:13px;font-weight:600;" id="ldPhone">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Property Type</div>
+          <div style="font-size:13px;" id="ldPropType">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Location</div>
+          <div style="font-size:13px;" id="ldAddress">—</div>
+        </div>
+      </div>
+
+      <!-- Project scope -->
+      <div class="sec-label">Project Scope</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Budget Range</div>
+          <div style="font-size:13px;font-weight:600;color:var(--accent);" id="ldBudget">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Target Start</div>
+          <div style="font-size:13px;" id="ldStart">—</div>
+        </div>
+      </div>
+
+      <!-- Rooms -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;">Rooms Selected</div>
+        <div id="ldRooms" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;">Their Description</div>
+        <div id="ldDesc" style="font-size:13px;color:var(--txt2);line-height:1.72;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;white-space:pre-wrap;"></div>
+      </div>
+
+      <!-- Source + time -->
+      <div style="display:flex;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);">
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">How they found us</div>
+          <div style="font-size:12px;" id="ldSource">—</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:3px;">Submitted</div>
+          <div style="font-size:12px;" id="ldTime">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" id="leadModalFoot"></div>
+  </div>
+</div>
+
 <!-- LIGHTBOX -->
 <div id="lb"><button id="lb-x" onclick="closeLb()">&#x2715;</button><img id="lb-img" src="" alt=""/></div>
 
@@ -1852,10 +1929,10 @@ function renderLeads(){
   }
   el.innerHTML=filtered.map((l,i)=>{
     const date=new Date(l.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
-    const scoreLabel={HOT:"Hot",WARM:"Warm",COLD:"Cold"}[l.score]||"Warm";
+    const scoreLabel={HOT:"🔥 Hot",WARM:"Warm",COLD:"Cold"}[l.score]||"Warm";
     const rooms=(l.rooms||[]).slice(0,3).join(", ")+(l.rooms?.length>3?` +${l.rooms.length-3} more`:"");
     const converted=l.status==="converted";
-    return`<div class="lead-card ${(l.score||"WARM").toLowerCase()} stagger" style="animation-delay:${i*50}ms;${converted?"opacity:0.55;":""}">
+    return`<div class="lead-card ${(l.score||"WARM").toLowerCase()} stagger" style="animation-delay:${i*50}ms;${converted?"opacity:0.55;":""}cursor:pointer;" onclick="openLeadModal('${l.id}')">
       <div class="lead-top">
         <div>
           <div class="lead-name">${l.name||"Unknown"}${converted?" <span style='font-size:10px;color:var(--txt3);font-weight:400;'>(Converted)</span>":""}</div>
@@ -1871,10 +1948,10 @@ function renderLeads(){
         ${rooms?`<span class="lead-meta-item"><i class="bi bi-house-door"></i>${rooms}</span>`:""}
       </div>
       ${l.ai_summary?`<div class="lead-summary">"${l.ai_summary}"</div>`:""}
-      <div class="lead-actions">
-        ${l.phone?`<button class="btn btn-ghost btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\\'")}')"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
+      <div class="lead-actions" onclick="event.stopPropagation()">
+        ${l.phone?`<button class="btn btn-ghost btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\'")}')"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
         ${!converted?`<button class="btn btn-primary btn-sm" onclick="prefillProposal('${l.id}')"><i class="bi bi-stars"></i> Generate Proposal &rarr;</button>`:""}
-        ${!converted?`<button class="btn btn-ghost btn-sm" onclick="markAsWon('${l.id}','${(l.name||"").replace(/'/g,"\\'")}','${(l.phone||"").replace(/'/g,"\\'")}','${(l.property_type||"").replace(/'/g,"\\'")}','${(l.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-check2-circle"></i> Mark as Won</button>`:`<span style="font-size:11px;color:var(--txt3);font-weight:500;"><i class="bi bi-check2-circle"></i> Converted to project</span>`}
+        ${!converted?`<button class="btn btn-ghost btn-sm" onclick="markAsWon('${l.id}','${(l.name||"").replace(/'/g,"\'")}','${(l.phone||"").replace(/'/g,"\'")}','${(l.property_type||"").replace(/'/g,"\'")}','${(l.address||"").replace(/'/g,"\'")}')"><i class="bi bi-check2-circle"></i> Mark as Won</button>`:`<span style="font-size:11px;color:var(--txt3);font-weight:500;"><i class="bi bi-check2-circle"></i> Converted to project</span>`}
         <span class="lead-time">${date}${l.referral_source?" · via "+l.referral_source:""}</span>
       </div>
     </div>`;
@@ -1978,7 +2055,63 @@ async function markAsWon(id,name,phone,propertyType,address){
   }catch(e){showToast("Failed: "+e.message);}
 }
 
-function copyIntakeLink(){
+function openLeadModal(leadId){
+  const l=allLeads.find(x=>x.id===leadId);
+  if(!l)return;
+  const converted=l.status==="converted";
+  const scoreLabel={HOT:"🔥 Hot",WARM:"Warm",COLD:"Cold"}[l.score]||"Warm";
+  const date=new Date(l.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+  // Header
+  document.getElementById("leadModalName").textContent=l.name||"Unknown";
+  const badge=document.getElementById("leadModalBadge");
+  badge.textContent=scoreLabel;
+  badge.className="lead-badge "+(l.score||"WARM");
+
+  // AI summary
+  const sumEl=document.getElementById("leadModalSummary");
+  sumEl.textContent=l.ai_summary||"No AI summary available.";
+  sumEl.style.display=l.ai_summary?"block":"none";
+
+  // Fields
+  document.getElementById("ldName").textContent=l.name||"—";
+  document.getElementById("ldPhone").innerHTML=l.phone?`<a href="https://wa.me/6${l.phone.replace(/[^0-9]/g,"")}" target="_blank" style="color:var(--accent);text-decoration:none;">${l.phone} <i class="bi bi-whatsapp"></i></a>`:"—";
+  document.getElementById("ldPropType").textContent=l.property_type||"—";
+  document.getElementById("ldAddress").textContent=l.address||"—";
+  document.getElementById("ldBudget").textContent=l.budget_range||"—";
+  document.getElementById("ldStart").textContent=l.start_date||"—";
+  document.getElementById("ldSource").textContent=l.referral_source||"—";
+  document.getElementById("ldTime").textContent=date;
+
+  // Rooms chips
+  const roomsEl=document.getElementById("ldRooms");
+  roomsEl.innerHTML=(l.rooms&&l.rooms.length)
+    ?l.rooms.map(r=>`<span style="padding:4px 10px;background:var(--accent-dim);border:1px solid var(--accent-border);color:var(--accent);border-radius:20px;font-size:11px;font-weight:600;">${r}</span>`).join("")
+    :`<span style="font-size:12px;color:var(--txt3);">No rooms specified</span>`;
+
+  // Description
+  const descEl=document.getElementById("ldDesc");
+  descEl.textContent=l.project_description||"No description provided.";
+  descEl.style.color=l.project_description?"var(--txt2)":"var(--txt3)";
+
+  // Footer actions
+  document.getElementById("leadModalFoot").innerHTML=`
+    ${l.phone?`<button class="btn btn-ghost btn-sm" onclick="waLead('${l.phone}','${(l.name||"").replace(/'/g,"\\'")}');closeLeadModal()"><i class="bi bi-whatsapp"></i> WhatsApp</button>`:""}
+    ${!converted?`<button class="btn btn-primary btn-sm" onclick="closeLeadModal();prefillProposal('${l.id}')"><i class="bi bi-stars"></i> Generate Proposal &rarr;</button>`:""}
+    ${!converted?`<button class="btn btn-ghost btn-sm" onclick="closeLeadModal();markAsWon('${l.id}','${(l.name||"").replace(/'/g,"\\'")}','${(l.phone||"").replace(/'/g,"\\'")}','${(l.property_type||"").replace(/'/g,"\\'")}','${(l.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-check2-circle"></i> Mark as Won</button>`:""}
+  `;
+
+  document.getElementById("leadModal").classList.add("open");
+}
+
+function closeLeadModal(){
+  document.getElementById("leadModal").classList.remove("open");
+}
+
+// Close modal on overlay click
+document.getElementById("leadModal").addEventListener("click",function(e){
+  if(e.target===this)closeLeadModal();
+});
   const link=window.location.origin+"/intake.html";
   navigator.clipboard.writeText(link).then(()=>showToast("Intake link copied — share it with enquiries","success"));
 }
