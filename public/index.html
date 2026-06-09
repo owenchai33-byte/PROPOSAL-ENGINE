@@ -2124,6 +2124,8 @@ function closeLeadModal(){
 document.getElementById("leadModal").addEventListener("click",function(e){
   if(e.target===this)closeLeadModal();
 });
+
+function copyIntakeLink(){
   const link=window.location.origin+"/intake.html";
   navigator.clipboard.writeText(link).then(()=>showToast("Intake link copied — share it with enquiries","success"));
 }
