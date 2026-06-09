@@ -699,6 +699,58 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
 .lead-stat-num{font-size:22px;font-weight:800;letter-spacing:-.3px;margin-bottom:2px;}
 .lead-stat-lbl{font-size:10px;color:var(--txt3);font-weight:500;}
 
+/* ── INVOICE ── */
+.inv-panel{
+  background:var(--bg);
+  border:1.5px solid var(--border);border-top:none;
+  border-radius:0 0 var(--radius) var(--radius);
+  padding:14px;
+  display:none;
+}
+.inv-panel.open{display:block;}
+.inv-list{margin-bottom:10px;}
+.inv-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;background:var(--card);
+  border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  margin-bottom:6px;cursor:pointer;
+  transition:box-shadow .15s,transform .15s;
+}
+.inv-row:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
+.inv-row-info{flex:1;min-width:0;}
+.inv-row-num{font-size:10px;font-weight:700;color:var(--txt3);letter-spacing:.04em;margin-bottom:2px;}
+.inv-row-title{font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.inv-row-date{font-size:11px;color:var(--txt3);margin-top:1px;}
+.inv-row-right{text-align:right;flex-shrink:0;}
+.inv-row-amount{font-size:14px;font-weight:800;color:var(--txt);letter-spacing:-.2px;}
+.inv-status{
+  font-size:9px;font-weight:700;padding:2px 7px;
+  border-radius:12px;margin-top:3px;display:inline-block;
+  letter-spacing:.04em;text-transform:uppercase;
+}
+.inv-status.draft{background:var(--bg2);color:var(--txt3);border:1px solid var(--border2);}
+.inv-status.sent{background:var(--accent-dim);color:var(--accent);border:1px solid var(--accent-border);}
+.inv-status.paid{background:rgba(94,139,90,0.1);color:#5E8B5A;border:1px solid rgba(94,139,90,0.25);}
+.inv-status.overdue{background:rgba(192,57,43,0.1);color:#C0392B;border:1px solid rgba(192,57,43,0.2);}
+
+/* Invoice modal */
+.inv-modal{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:500px;box-shadow:0 24px 64px rgba(28,20,8,0.15);max-height:90vh;display:flex;flex-direction:column;}
+.inv-modal-body{padding:18px;overflow-y:auto;flex:1;}
+
+/* Line items editor */
+.line-items-table{width:100%;margin-bottom:8px;}
+.li-row{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;margin-bottom:5px;}
+.li-desc{font-size:12px;}
+.li-amt{width:110px;font-size:12px;text-align:right;}
+.li-del{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:16px;padding:4px;transition:color .15s;flex-shrink:0;}
+.li-del:hover{color:#C0392B;}
+.li-total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;border-top:2px solid var(--txt);margin-top:4px;}
+.li-total-label{font-size:12px;font-weight:700;color:var(--txt);}
+.li-total-val{font-size:18px;font-weight:800;color:var(--accent);letter-spacing:-.3px;}
+
+/* Outstanding stat */
+.stat-card.outstanding{--stat-color:#5A7A8E;--stat-dim:rgba(90,122,142,0.09);}
+
 /* ── MOBILE ── */
 @media(max-width:767px){
   :root{--sb-w:100%;}
@@ -1206,6 +1258,72 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
   </div>
 </div>
 
+<!-- INVOICE MODAL -->
+<div class="modal-ov" id="invModal">
+  <div class="inv-modal">
+    <div class="modal-head">
+      <span class="modal-title" id="invModalTitle">New Invoice</span>
+      <button class="modal-x" onclick="closeInvModal()">&#x2715;</button>
+    </div>
+    <div class="inv-modal-body">
+      <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;">Billed To</div>
+        <div style="font-size:13px;font-weight:700;" id="invClientName">—</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:2px;" id="invClientMeta">—</div>
+      </div>
+
+      <div class="g2" style="margin-bottom:10px;">
+        <div class="fg"><label>Invoice title <span style="color:var(--accent);">*</span></label>
+          <input type="text" id="invTitle" placeholder="e.g. First Payment — Upon Signing"/>
+        </div>
+        <div class="fg"><label>Due date</label>
+          <input type="date" id="invDueDate"/>
+        </div>
+      </div>
+
+      <div class="fg" style="margin-bottom:14px;"><label>Payment method</label>
+        <select id="invPayMethod">
+          <option value="Bank Transfer">Bank Transfer</option>
+          <option value="Cash">Cash</option>
+          <option value="Online Banking">Online Banking</option>
+          <option value="Cheque">Cheque</option>
+        </select>
+      </div>
+
+      <div class="sec-label" style="margin-top:0;">Line Items</div>
+      <div class="line-items-table" id="lineItemsEditor"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addLineItem()" style="margin-bottom:14px;width:100%;justify-content:center;">
+        <i class="bi bi-plus-lg"></i> Add line item
+      </button>
+
+      <div class="fg"><label>Notes (optional)</label>
+        <textarea id="invNotes" placeholder="e.g. Please bank in within 3 working days. Reference: INV-2026-001" style="min-height:60px;"></textarea>
+      </div>
+      <div class="err" id="invErr"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost btn-sm" onclick="closeInvModal()">Cancel</button>
+      <button class="btn btn-outline btn-sm" onclick="saveInvoice('draft')"><i class="bi bi-save"></i> Save Draft</button>
+      <button class="btn btn-primary btn-sm" onclick="saveInvoice('sent')"><i class="bi bi-send"></i> Save & Mark Sent</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVOICE DETAIL MODAL -->
+<div class="modal-ov" id="invDetailModal">
+  <div class="inv-modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="invDetailNum">INV-2026-001</div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px;" id="invDetailDate"></div>
+      </div>
+      <button class="modal-x" onclick="closeInvDetail()">&#x2715;</button>
+    </div>
+    <div class="inv-modal-body" id="invDetailBody"></div>
+    <div class="modal-foot" id="invDetailFoot"></div>
+  </div>
+</div>
+
 <!-- LIGHTBOX -->
 <div id="lb"><button id="lb-x" onclick="closeLb()">&#x2715;</button><img id="lb-img" src="" alt=""/></div>
 
@@ -1703,7 +1821,7 @@ function renderProjList(){
     const safeName=(p.name||"").replace(/'/g,"\\'");
     const safeClient=(p.client_name||"").replace(/'/g,"\\'");
     return`<div class="proj-card-wrap">
-      <div class="proj-card" onclick="goToUpdate('${p.id}')">
+      <div class="proj-card-inner spotlight" onclick="goToUpdate('${p.id}')">
         <div class="proj-info">
           <div class="proj-name">${p.name}</div>
           <div class="proj-meta">${p.client_name}${p.client_phone?" · "+p.client_phone:""}${p.address?" · "+p.address:""}</div>
@@ -1713,7 +1831,7 @@ function renderProjList(){
           <div class="prog-num">${p.progress||0}%</div>
           <div class="prog-lbl">progress</div>
           <div class="proj-actions">
-            <button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();delProj('${p.id}','${safeName}')">✕</button>
+            <button class="btn btn-ghost btn-icon" onclick="event.stopPropagation();delProj('${p.id}','${safeName}')"><i class="bi bi-x-lg"></i></button>
           </div>
         </div>
       </div>
@@ -1721,7 +1839,7 @@ function renderProjList(){
         <div class="portal-left">
           <div class="portal-dot ${active?"on":""}"></div>
           <span class="portal-label">Client Portal</span>
-          <span class="portal-badge ${active?"on":"off"}">${active?"Active":"Off"}</span>
+          <span class="portal-badge ${active?"on":"off"}"><i class="bi ${active?"bi-check-circle-fill":"bi-circle"}" style="margin-right:3px;"></i>${active?"Active":"Off"}</span>
         </div>
         <div class="portal-right">
           ${active?`
@@ -1730,13 +1848,18 @@ function renderProjList(){
               <button class="plang ${lang==="ms"?"on":""}" onclick="setPortalLang('${p.id}','ms')">MY</button>
               <button class="plang ${lang==="zh"?"on":""}" onclick="setPortalLang('${p.id}','zh')">中</button>
             </div>
-            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${p.id}')">Copy Link</button>
-            <button class="btn btn-ghost btn-sm" onclick="sharePortalWA('${p.id}','${safeClient}','${p.client_phone||""}')">WhatsApp</button>
+            <button class="btn btn-ghost btn-sm" onclick="copyPortalLink('${p.id}')"><i class="bi bi-link-45deg"></i> Copy Link</button>
+            <button class="btn btn-ghost btn-sm" onclick="sharePortalWA('${p.id}','${safeClient}','${encodeURIComponent(p.client_phone||"")}')"><i class="bi bi-whatsapp"></i></button>
             <button class="btn btn-ghost btn-sm" style="color:var(--txt3);" onclick="togglePortal('${p.id}',false)">Deactivate</button>
           `:`
             <button class="btn btn-outline btn-sm" onclick="togglePortal('${p.id}',true)">Enable Portal →</button>
           `}
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleInvPanel('${p.id}')"><i class="bi bi-receipt"></i> Invoices</button>
         </div>
+      </div>
+      <div class="inv-panel" id="inv-${p.id}" onclick="event.stopPropagation()">
+        <div class="inv-list" id="invlist-${p.id}"><div style="font-size:12px;color:var(--txt3);text-align:center;padding:10px;">Loading...</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openNewInvoice('${p.id}','${safeName}','${safeClient}','${(p.client_phone||"").replace(/'/g,"\\'")}','${(p.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-plus-lg"></i> New Invoice</button>
       </div>
     </div>`;
   }).join("");
@@ -2051,8 +2174,299 @@ document.addEventListener("DOMContentLoaded", () => {
   staggerIn(".qa-btn");
 });
 // ═══════════════════════════════════════
-// LEADS
+// INVOICES
 // ═══════════════════════════════════════
+let curInvProject=null, editingInvId=null, lineItems=[];
+
+async function toggleInvPanel(projId){
+  const panel=document.getElementById("inv-"+projId);
+  const isOpen=panel.classList.contains("open");
+  // Close all panels first
+  document.querySelectorAll(".inv-panel.open").forEach(p=>p.classList.remove("open"));
+  if(!isOpen){
+    panel.classList.add("open");
+    await loadInvoices(projId);
+  }
+}
+
+async function loadInvoices(projId){
+  const el=document.getElementById("invlist-"+projId);
+  el.innerHTML=`<div style="font-size:12px;color:var(--txt3);text-align:center;padding:10px;">Loading...</div>`;
+  try{
+    const r=await fetch(`/api/invoices?project_id=${projId}`,{headers:{"Content-Type":"application/json"}});
+    const invs=await r.json();
+    if(!invs.length){
+      el.innerHTML=`<div style="font-size:12px;color:var(--txt3);text-align:center;padding:12px 0;">No invoices yet. Create your first one below.</div>`;
+      return;
+    }
+    el.innerHTML=invs.map(inv=>{
+      const status=getInvStatus(inv);
+      const date=new Date(inv.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short",year:"numeric"});
+      return`<div class="inv-row" onclick="openInvDetail('${inv.id}')">
+        <div class="inv-row-info">
+          <div class="inv-row-num">${inv.invoice_number}</div>
+          <div class="inv-row-title">${inv.title}</div>
+          <div class="inv-row-date">${date}${inv.due_date?" · Due "+inv.due_date:""}</div>
+        </div>
+        <div class="inv-row-right">
+          <div class="inv-row-amount">RM ${Number(inv.total||0).toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+          <div class="inv-status ${status}">${status.toUpperCase()}</div>
+        </div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    el.innerHTML=`<div style="font-size:12px;color:var(--txt3);text-align:center;padding:10px;">Failed to load invoices.</div>`;
+  }
+}
+
+function getInvStatus(inv){
+  if(inv.status==="paid")return"paid";
+  if(inv.status==="sent"&&inv.due_date&&new Date(inv.due_date)<new Date())return"overdue";
+  return inv.status||"draft";
+}
+
+function openNewInvoice(projId,projName,clientName,clientPhone,address){
+  curInvProject={id:projId,name:projName,client_name:clientName,client_phone:clientPhone,address:address};
+  editingInvId=null;
+  lineItems=[{desc:"",amount:""}];
+  document.getElementById("invModalTitle").textContent="New Invoice";
+  document.getElementById("invClientName").textContent=clientName;
+  document.getElementById("invClientMeta").textContent=[clientPhone,address].filter(Boolean).join(" · ");
+  document.getElementById("invTitle").value="";
+  document.getElementById("invDueDate").value="";
+  document.getElementById("invNotes").value="";
+  document.getElementById("invErr").style.display="none";
+  renderLineItems();
+  document.getElementById("invModal").classList.add("open");
+}
+
+function renderLineItems(){
+  const el=document.getElementById("lineItemsEditor");
+  el.innerHTML=lineItems.map((li,i)=>`
+    <div class="li-row">
+      <input class="li-desc" type="text" placeholder="Description" value="${li.desc||""}"
+        oninput="lineItems[${i}].desc=this.value"/>
+      <input class="li-amt" type="number" placeholder="0.00" min="0" step="0.01" value="${li.amount||""}"
+        oninput="lineItems[${i}].amount=this.value;updateInvTotal()"/>
+      <button class="li-del" onclick="removeLineItem(${i})">&#x2715;</button>
+    </div>`).join("")+`
+    <div class="li-total-row">
+      <span class="li-total-label">TOTAL</span>
+      <span class="li-total-val" id="invTotalDisplay">RM 0.00</span>
+    </div>`;
+  updateInvTotal();
+}
+
+function addLineItem(){lineItems.push({desc:"",amount:""});renderLineItems();}
+function removeLineItem(i){if(lineItems.length>1){lineItems.splice(i,1);renderLineItems();}}
+function updateInvTotal(){
+  const total=lineItems.reduce((s,li)=>s+parseFloat(li.amount||0),0);
+  const el=document.getElementById("invTotalDisplay");
+  if(el)el.textContent="RM "+total.toLocaleString("en-MY",{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+async function saveInvoice(status){
+  const title=document.getElementById("invTitle").value.trim();
+  const err=document.getElementById("invErr");err.style.display="none";
+  if(!title){err.textContent="Please enter an invoice title.";err.style.display="block";return;}
+  if(!lineItems.some(li=>li.desc&&li.amount)){err.textContent="Please add at least one line item with description and amount.";err.style.display="block";return;}
+  const total=lineItems.reduce((s,li)=>s+parseFloat(li.amount||0),0);
+  const body={
+    project_id:curInvProject.id,
+    title,
+    line_items:lineItems.filter(li=>li.desc||li.amount),
+    total,
+    due_date:document.getElementById("invDueDate").value||null,
+    payment_method:document.getElementById("invPayMethod").value,
+    notes:document.getElementById("invNotes").value.trim()||null,
+    status,
+  };
+  try{
+    let r;
+    if(editingInvId){
+      r=await fetch("/api/invoices",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:editingInvId,...body})});
+    }else{
+      r=await fetch("/api/invoices",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    }
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+    closeInvModal();
+    await loadInvoices(curInvProject.id);
+    showToast(editingInvId?"Invoice updated":"Invoice created","success");
+  }catch(e){err.textContent="Error: "+e.message;err.style.display="block";}
+}
+
+function closeInvModal(){
+  document.getElementById("invModal").classList.remove("open");
+  editingInvId=null;lineItems=[];
+}
+
+// Invoice detail view
+let allInvoices={};
+async function openInvDetail(invId){
+  // Fetch from current project's loaded invoices
+  const r=await fetch(`/api/invoices?project_id=${curInvProject?.id||"none"}`,{headers:{"Content-Type":"application/json"}});
+  const invs=await r.json();
+  const inv=invs.find(i=>i.id===invId);
+  if(!inv)return;
+  allInvoices[invId]=inv;
+
+  const status=getInvStatus(inv);
+  const date=new Date(inv.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
+  const li=(inv.line_items||[]).map(l=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;">
+      <span style="color:var(--txt2);">${l.desc||"—"}</span>
+      <span style="font-weight:600;">RM ${parseFloat(l.amount||0).toLocaleString("en-MY",{minimumFractionDigits:2})}</span>
+    </div>`).join("");
+
+  document.getElementById("invDetailNum").textContent=inv.invoice_number;
+  document.getElementById("invDetailDate").textContent=`Created ${date}${inv.due_date?" · Due "+inv.due_date:""}`;
+  document.getElementById("invDetailBody").innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;">${inv.title}</div>
+        <div style="font-size:11px;color:var(--txt2);margin-top:2px;">${inv.payment_method||"Bank Transfer"}</div>
+      </div>
+      <span class="inv-status ${status}">${status.toUpperCase()}</span>
+    </div>
+    <div style="margin-bottom:14px;">${li}
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;font-weight:800;font-size:15px;">
+        <span>TOTAL DUE</span>
+        <span style="color:var(--accent);">RM ${Number(inv.total||0).toLocaleString("en-MY",{minimumFractionDigits:2})}</span>
+      </div>
+    </div>
+    <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:${inv.notes?"10px":"0"};">
+      <div style="font-size:10px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;">Payment Details</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.8;">
+        Bank: <strong style="color:var(--txt);">[Your Bank Name]</strong><br/>
+        Account No: <strong style="color:var(--txt);">[Account Number]</strong><br/>
+        Account Name: <strong style="color:var(--txt);">Mushi Space Design Sdn Bhd</strong><br/>
+        Reference: <strong style="color:var(--txt);">${inv.invoice_number}</strong>
+      </div>
+    </div>
+    ${inv.notes?`<div style="font-size:12px;color:var(--txt2);line-height:1.7;padding:10px 0;">${inv.notes}</div>`:""}`;
+
+  document.getElementById("invDetailFoot").innerHTML=`
+    <button class="btn btn-ghost btn-sm" onclick="closeInvDetail()">Close</button>
+    ${status!=="paid"?`<button class="btn btn-outline btn-sm" onclick="updateInvStatus('${invId}','${curInvProject.id}','sent')"><i class="bi bi-send"></i> Mark Sent</button>`:""}
+    ${status==="sent"||status==="overdue"?`<button class="btn btn-primary btn-sm" onclick="updateInvStatus('${invId}','${curInvProject.id}','paid')"><i class="bi bi-check2-circle"></i> Mark Paid</button>`:""}
+    <button class="btn btn-outline btn-sm" onclick="exportInvoicePDF('${invId}')"><i class="bi bi-download"></i> PDF</button>
+  `;
+  document.getElementById("invDetailModal").classList.add("open");
+}
+
+function closeInvDetail(){document.getElementById("invDetailModal").classList.remove("open");}
+
+async function updateInvStatus(invId,projId,status){
+  await fetch("/api/invoices",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:invId,status})});
+  closeInvDetail();
+  await loadInvoices(projId);
+  showToast("Invoice marked as "+status,"success");
+}
+
+function exportInvoicePDF(invId){
+  const inv=allInvoices[invId];
+  if(!inv||!window.jspdf)return;
+  const{jsPDF}=window.jspdf;
+  const proj=projects.find(p=>p.id===inv.project_id)||{};
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const W=210,L=18,R=18,CW=W-L-R;
+  const today=new Date(inv.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"long",year:"numeric"});
+
+  // Header
+  doc.setFillColor(20,17,16);doc.rect(0,0,W,24,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(255,255,255);
+  doc.text("MUSHI SPACE DESIGN SDN BHD",L,11);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
+  doc.text("Space · Style · Living",L,17);
+  doc.text("019-283 8686  ·  @mushispacedesign",W-R,17,{align:"right"});
+
+  // Invoice title block
+  let y=34;
+  doc.setFont("helvetica","bold");doc.setFontSize(20);doc.setTextColor(20,17,16);
+  doc.text("INVOICE",L,y);y+=6;
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(100,100,100);
+  doc.text(`Invoice No: `,L,y);doc.setFont("helvetica","bold");doc.setTextColor(20,17,16);doc.text(inv.invoice_number,L+22,y);
+  doc.setFont("helvetica","normal");doc.setTextColor(100,100,100);
+  doc.text(`Date: ${today}`,W-R,y,{align:"right"});y+=5;
+  if(inv.due_date){doc.text(`Due Date: ${inv.due_date}`,W-R,y,{align:"right"});}
+  y+=8;
+
+  // Divider
+  doc.setDrawColor(200,194,186);doc.setLineWidth(0.3);doc.line(L,y,W-R,y);y+=8;
+
+  // Billed to
+  doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(140,130,120);
+  doc.text("BILLED TO",L,y);y+=5;
+  doc.setFont("helvetica","bold");doc.setFontSize(10);doc.setTextColor(20,17,16);
+  doc.text(proj.client_name||"—",L,y);y+=5;
+  doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(100,100,100);
+  if(proj.client_phone)doc.text(proj.client_phone,L,y),y+=4;
+  if(proj.address)doc.text(proj.address,L,y),y+=4;
+  y+=5;
+
+  // Line items table
+  doc.setDrawColor(200,194,186);doc.setLineWidth(0.3);doc.line(L,y,W-R,y);y+=5;
+  doc.setFillColor(245,241,237);doc.rect(L,y-1,CW,6,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(100,100,100);
+  doc.text("DESCRIPTION",L+1,y+3);doc.text("AMOUNT (RM)",W-R-1,y+3,{align:"right"});y+=8;
+  (inv.line_items||[]).forEach((li,i)=>{
+    if(i%2===0){doc.setFillColor(251,249,247);doc.rect(L,y-1,CW,6,"F");}
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.setTextColor(20,17,16);
+    doc.text(li.desc||"—",L+1,y+3);
+    doc.text(parseFloat(li.amount||0).toLocaleString("en-MY",{minimumFractionDigits:2}),W-R-1,y+3,{align:"right"});
+    y+=6;
+  });
+  y+=3;
+  doc.setDrawColor(20,17,16);doc.setLineWidth(0.5);doc.line(L,y,W-R,y);y+=6;
+  doc.setFont("helvetica","bold");doc.setFontSize(12);doc.setTextColor(20,17,16);
+  doc.text("TOTAL DUE",L+1,y);
+  doc.setTextColor(192,139,58);
+  doc.text("RM "+Number(inv.total||0).toLocaleString("en-MY",{minimumFractionDigits:2}),W-R-1,y,{align:"right"});
+  y+=12;
+
+  // Payment details box
+  doc.setDrawColor(200,194,186);doc.setLineWidth(0.3);doc.rect(L,y,CW,32,"S");
+  doc.setFillColor(248,245,242);doc.rect(L,y,CW,32,"F");
+  doc.setDrawColor(200,194,186);doc.setLineWidth(0.3);doc.rect(L,y,CW,32,"S");
+  doc.setFont("helvetica","bold");doc.setFontSize(7.5);doc.setTextColor(140,130,120);
+  doc.text("PAYMENT DETAILS",L+4,y+6);
+  const pd=[
+    ["Bank","[Your Bank Name]"],
+    ["Account No","[Account Number]"],
+    ["Account Name","Mushi Space Design Sdn Bhd"],
+    ["Reference",inv.invoice_number],
+  ];
+  let py=y+12;
+  pd.forEach(([k,v])=>{
+    doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(100,100,100);
+    doc.text(k+":",L+4,py);
+    doc.setFont("helvetica","bold");doc.setTextColor(20,17,16);
+    doc.text(v,L+36,py);py+=5;
+  });
+  y+=36;
+
+  // Notes
+  if(inv.notes){
+    y+=5;
+    doc.setFont("helvetica","normal");doc.setFontSize(8);doc.setTextColor(100,100,100);
+    const nl=doc.splitTextToSize(inv.notes,CW);
+    doc.text(nl,L,y);y+=nl.length*4+4;
+  }
+
+  // Footer
+  doc.setFillColor(20,17,16);doc.rect(0,272,W,25,"F");
+  doc.setFont("helvetica","bold");doc.setFontSize(8.5);doc.setTextColor(255,255,255);
+  doc.text("Mushi Space Design Sdn Bhd",L,281);
+  doc.setFont("helvetica","normal");doc.setFontSize(7);doc.setTextColor(170,170,170);
+  doc.text("Space · Style · Living  ·  019-283 8686  ·  @mushispacedesign  ·  Kuching, Sarawak",L,287);
+  doc.setTextColor(100,100,100);
+  doc.text(`${inv.invoice_number}  ·  ${today}`,W-R,287,{align:"right"});
+
+  doc.save(`${inv.invoice_number}_${(proj.client_name||"Client").replace(/[^a-zA-Z0-9]/g,"_")}.pdf`);
+}
+
+
 let allLeads=[], leadFilter="all";
 
 async function loadLeads(){
