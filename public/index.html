@@ -2185,8 +2185,11 @@ function renderProjList(){
             <button class="btn btn-ghost btn-sm" onclick="sharePortalWA('${p.id}','${safeClient}','${encodeURIComponent(p.client_phone||"")}')"><i class="bi bi-whatsapp"></i></button>
             <button class="btn btn-ghost btn-sm" style="color:var(--txt3);" onclick="togglePortal('${p.id}',false)">Deactivate</button>`
           :`<button class="btn btn-outline btn-sm" onclick="togglePortal('${p.id}',true)">Enable Portal →</button>`}
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleInvPanel('${p.id}')"><i class="bi bi-receipt"></i> Invoices</button>
         </div>
+      </div>
+      <div style="background:var(--bg2);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;" onclick="event.stopPropagation()">
+        <span style="font-size:11px;color:var(--txt3);font-weight:500;">Invoices</span>
+        <button class="btn btn-ghost btn-sm" onclick="toggleInvPanel('${p.id}')"><i class="bi bi-receipt"></i> View / Add Invoices</button>
       </div>
       <div class="inv-panel" id="inv-${p.id}" onclick="event.stopPropagation()">
         <div class="inv-list" id="invlist-${p.id}"><div style="font-size:12px;color:var(--txt3);text-align:center;padding:10px;">Loading...</div></div>
