@@ -1316,14 +1316,11 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
       <div class="page-body"><div id="projList"><div class="loading">Loading projects...</div></div></div>
     </div>
 
-  </div>
-</div>
-
-    <!-- PROJECT DETAIL VIEW -->
-    <div class="view" id="view-project" style="padding:0;overflow:auto;">
+    <!-- PROJECT DETAIL -->
+    <div class="view" id="view-project" style="padding:0;overflow-y:auto;flex-direction:column;">
       <div class="pd-bar">
         <button class="btn btn-ghost btn-sm" onclick="nav('projects')" style="gap:5px;"><i class="bi bi-arrow-left"></i> Projects</button>
-        <div id="pdBarTitle" style="font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"></div>
+        <div id="pdBarTitle" style="font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;"></div>
         <div style="width:80px;"></div>
       </div>
       <div id="pdHero" class="pd-hero"></div>
@@ -1336,6 +1333,9 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
       </div>
       <div id="pdContent" class="pd-content"></div>
     </div>
+
+  </div>
+</div>
 
 <!-- BOTTOM NAV -->
 <nav class="bot-nav">
