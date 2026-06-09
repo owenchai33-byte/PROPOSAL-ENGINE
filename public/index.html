@@ -751,6 +751,165 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
 /* Outstanding stat */
 .stat-card.outstanding{--stat-color:#5A7A8E;--stat-dim:rgba(90,122,142,0.09);}
 
+
+/* ── PROJECT DETAIL VIEW ── */
+.pd-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 24px;
+  background:var(--card);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:20;
+  box-shadow:var(--shadow-xs);
+}
+.pd-hero{
+  padding:20px 28px 16px;
+  background:var(--card);border-bottom:1px solid var(--border);
+}
+.pd-hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.pd-hero-name{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:3px;}
+.pd-hero-meta{font-size:12px;color:var(--txt2);}
+.pd-hero-pct{font-size:32px;font-weight:800;color:var(--accent);letter-spacing:-.5px;line-height:1;text-align:right;}
+.pd-hero-pct-lbl{font-size:10px;color:var(--txt3);text-align:right;margin-top:1px;}
+.pd-prog{height:5px;background:var(--border2);border-radius:3px;overflow:hidden;}
+.pd-prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent),#E0AA5A);transition:width .8s cubic-bezier(.4,0,.2,1);}
+.pd-tabs{
+  display:flex;gap:0;
+  background:var(--bg);
+  border-bottom:1.5px solid var(--border);
+  position:sticky;top:48px;z-index:15;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.pd-tabs::-webkit-scrollbar{display:none;}
+.pd-tab{
+  padding:11px 16px;font-size:12px;font-weight:500;
+  color:var(--txt3);border:none;background:none;
+  cursor:pointer;font-family:inherit;
+  border-bottom:2px solid transparent;
+  margin-bottom:-1.5px;
+  transition:color .15s,border-color .15s;
+  white-space:nowrap;
+  display:flex;align-items:center;gap:5px;
+  flex-shrink:0;
+}
+.pd-tab:hover{color:var(--txt2);}
+.pd-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.pd-content{padding:20px 28px 80px;flex:1;}
+
+/* Overview quick actions */
+.pd-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
+.pd-action-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  padding:14px;background:var(--card);border:1.5px solid var(--border);
+  border-radius:var(--radius);cursor:pointer;
+  font-family:inherit;text-align:left;
+  transition:all .2s var(--ease);
+  box-shadow:var(--shadow-xs);
+}
+.pd-action-btn:hover{background:var(--bg2);border-color:var(--accent-border);transform:translateY(-1px);box-shadow:var(--shadow-sm);}
+.pd-action-btn i{font-size:18px;color:var(--accent);}
+.pd-action-label{font-size:12px;font-weight:700;color:var(--txt);}
+.pd-action-sub{font-size:10px;color:var(--txt3);}
+
+/* Dashboard action feed */
+.action-feed{margin-bottom:16px;}
+.action-item{
+  display:flex;align-items:center;gap:12px;
+  padding:11px 14px;background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);margin-bottom:7px;
+  cursor:pointer;transition:all .15s;
+  box-shadow:var(--shadow-xs);
+}
+.action-item:hover{background:var(--bg2);transform:translateX(3px);}
+.action-item.urgent{border-left:3px solid #C0392B;}
+.action-item.warn{border-left:3px solid var(--accent);}
+.action-item.info{border-left:3px solid #5A7A8E;}
+.action-item.good{border-left:3px solid #5E8B5A;}
+.action-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.action-dot.urgent{background:#C0392B;}
+.action-dot.warn{background:var(--accent);}
+.action-dot.info{background:#5A7A8E;}
+.action-dot.good{background:#5E8B5A;}
+.action-body{flex:1;min-width:0;}
+.action-title{font-size:12px;font-weight:600;color:var(--txt);margin-bottom:1px;}
+.action-sub{font-size:11px;color:var(--txt3);}
+.action-arrow{font-size:14px;color:var(--txt3);flex-shrink:0;}
+
+/* FAB */
+.fab{
+  position:fixed;bottom:80px;right:18px;z-index:60;
+  display:none;
+}
+.fab-main{
+  width:52px;height:52px;border-radius:50%;
+  background:var(--accent);color:#fff;
+  border:none;cursor:pointer;font-size:22px;
+  box-shadow:0 4px 16px rgba(192,139,58,0.4),0 8px 32px rgba(192,139,58,0.25);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .25s var(--spring),box-shadow .2s;
+  font-family:inherit;
+}
+.fab-main:hover{transform:scale(1.08);}
+.fab-main.open{transform:rotate(45deg);}
+.fab-menu{
+  position:absolute;bottom:62px;right:0;
+  display:flex;flex-direction:column;gap:8px;
+  align-items:flex-end;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s var(--spring);
+  transform:translateY(10px);
+}
+.fab-menu.open{opacity:1;pointer-events:all;transform:translateY(0);}
+.fab-item{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 14px 8px 12px;
+  background:var(--sb);color:#fff;
+  border:none;border-radius:99px;cursor:pointer;
+  font-family:inherit;font-size:12px;font-weight:600;
+  box-shadow:0 4px 16px rgba(20,17,16,0.25);
+  transition:transform .15s var(--spring);
+  white-space:nowrap;
+}
+.fab-item:hover{transform:scale(1.04);}
+.fab-item i{font-size:14px;}
+
+/* Proposal stepper */
+.prop-stepper{
+  display:flex;align-items:center;gap:0;
+  margin-bottom:20px;padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.prop-step{
+  display:flex;align-items:center;gap:6px;flex:1;
+}
+.prop-step-dot{
+  width:24px;height:24px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;flex-shrink:0;
+  transition:all .25s var(--spring);
+  background:var(--border2);color:var(--txt3);
+}
+.prop-step-dot.active{background:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-dim);}
+.prop-step-dot.done{background:var(--sb);color:var(--accent);}
+.prop-step-label{font-size:11px;font-weight:500;color:var(--txt3);}
+.prop-step.active .prop-step-label{color:var(--accent);font-weight:700;}
+.prop-step.done .prop-step-label{color:var(--txt2);}
+.prop-step-line{flex:1;height:1px;background:var(--border2);margin:0 4px;}
+.prop-step-line.done{background:var(--accent);}
+.prop-page{display:none;}
+.prop-page.active{display:block;}
+
+@media(max-width:767px){
+  .fab{display:block;}
+  .pd-content{padding:16px 16px 80px;}
+  .pd-hero{padding:16px;}
+  .pd-bar{padding:10px 16px;}
+  .pd-actions{grid-template-columns:1fr 1fr;}
+}
+@media(min-width:768px){
+  .pd-actions{grid-template-columns:repeat(4,1fr);}
+}
+
 /* ── MOBILE ── */
 @media(max-width:767px){
   :root{--sb-w:100%;}
@@ -873,9 +1032,9 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
             <div class="stat-label">Active Projects</div>
           </div>
           <div class="stat-card copper spotlight">
-            <div class="stat-icon"><i class="bi bi-file-text"></i></div>
-            <div class="stat-num" id="dash-proposals" data-target="0">0</div>
-            <div class="stat-label">Proposals (session)</div>
+            <div class="stat-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div class="stat-num" id="dash-leads" data-target="0">0</div>
+            <div class="stat-label">New Leads</div>
           </div>
           <div class="stat-card sage spotlight">
             <div class="stat-icon"><i class="bi bi-stack"></i></div>
@@ -898,10 +1057,19 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
             <i class="bi bi-send"></i>
             <span>Send Update</span>
           </button>
-          <button class="qa-btn" onclick="openAddProj()">
-            <i class="bi bi-plus-square"></i>
-            <span>Add Project</span>
+          <button class="qa-btn" onclick="nav('leads')">
+            <i class="bi bi-lightning-charge-fill"></i>
+            <span>View Leads</span>
           </button>
+        </div>
+
+        <div class="card spotlight" style="margin-bottom:14px;">
+          <div class="card-head">
+            <span class="card-title">Today's Focus</span>
+          </div>
+          <div class="card-body">
+            <div class="action-feed" id="actionFeed"><div class="loading">Loading...</div></div>
+          </div>
         </div>
 
         <div class="card spotlight">
@@ -1151,18 +1319,46 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
   </div>
 </div>
 
+    <!-- PROJECT DETAIL VIEW -->
+    <div class="view" id="view-project" style="padding:0;overflow:auto;">
+      <div class="pd-bar">
+        <button class="btn btn-ghost btn-sm" onclick="nav('projects')" style="gap:5px;"><i class="bi bi-arrow-left"></i> Projects</button>
+        <div id="pdBarTitle" style="font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;"></div>
+        <div style="width:80px;"></div>
+      </div>
+      <div id="pdHero" class="pd-hero"></div>
+      <div class="pd-tabs">
+        <button class="pd-tab active" data-tab="overview" onclick="switchProjTab('overview')"><i class="bi bi-grid-1x2"></i> Overview</button>
+        <button class="pd-tab" data-tab="updates" onclick="switchProjTab('updates')"><i class="bi bi-camera-fill"></i> Update</button>
+        <button class="pd-tab" data-tab="history" onclick="switchProjTab('history')"><i class="bi bi-clock-history"></i> History</button>
+        <button class="pd-tab" data-tab="invoices" onclick="switchProjTab('invoices')"><i class="bi bi-receipt"></i> Invoices</button>
+        <button class="pd-tab" data-tab="portal" onclick="switchProjTab('portal')"><i class="bi bi-globe"></i> Portal</button>
+      </div>
+      <div id="pdContent" class="pd-content"></div>
+    </div>
+
 <!-- BOTTOM NAV -->
 <nav class="bot-nav">
   <div class="bot-nav-inner">
     <button class="bot-item active" data-view="dashboard" onclick="nav('dashboard')"><i class="bi bi-grid-1x2-fill"></i><span>Home</span></button>
+    <button class="bot-item" data-view="leads" onclick="nav('leads')"><i class="bi bi-lightning-charge-fill"></i><span>Leads</span></button>
+    <button class="bot-item" data-view="projects" onclick="nav('projects')"><i class="bi bi-buildings-fill"></i><span>Projects</span></button>
     <button class="bot-item" data-view="proposals" onclick="nav('proposals')"><i class="bi bi-file-text-fill"></i><span>Proposals</span></button>
     <button class="bot-item" data-view="updates" onclick="nav('updates')"><i class="bi bi-camera-fill"></i><span>Updates</span></button>
-    <button class="bot-item" data-view="history" onclick="nav('history')"><i class="bi bi-clock-history"></i><span>History</span></button>
-    <button class="bot-item" data-view="projects" onclick="nav('projects')"><i class="bi bi-buildings-fill"></i><span>Projects</span></button>
   </div>
 </nav>
-</div>
 
+<!-- FAB -->
+<div class="fab" id="fab">
+  <div class="fab-menu" id="fabMenu">
+    <button class="fab-item" onclick="closeFab();nav('updates')"><i class="bi bi-camera-fill"></i> Send Update</button>
+    <button class="fab-item" onclick="closeFab();nav('leads')"><i class="bi bi-lightning-charge-fill"></i> View Leads</button>
+    <button class="fab-item" onclick="closeFab();openAddProj()"><i class="bi bi-plus-lg"></i> New Project</button>
+    <button class="fab-item" onclick="closeFab();nav('proposals')"><i class="bi bi-file-text-fill"></i> New Proposal</button>
+  </div>
+  <button class="fab-main" id="fabBtn" onclick="toggleFab()"><i class="bi bi-plus-lg" id="fabIcon"></i></button>
+</div>
+</div>
 <!-- ADD PROJECT MODAL -->
 <div class="modal-ov" id="addProjModal">
   <div class="modal">
@@ -1425,7 +1621,7 @@ init();
 // ═══════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════
-const viewTitles={dashboard:"Dashboard",proposals:"Proposals",updates:"Site Updates",history:"Update History",projects:"Projects",leads:"Leads"};
+const viewTitles={dashboard:"Dashboard",proposals:"New Proposal",updates:"Site Update",history:"Update History",projects:"Projects",leads:"Leads",project:"Project"};
 function nav(view){
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
   document.getElementById(`view-${view}`).classList.add("active");
@@ -1435,8 +1631,9 @@ function nav(view){
   closeSidebar();
   if(view==="history")loadHistory();
   if(view==="projects")renderProjList();
-  if(view==="dashboard")renderDashboard();
+  if(view==="dashboard"){renderDashboard();renderActionFeed();}
   if(view==="leads")loadLeads();
+  if(view==="project"&&curProjDetail){renderProjectHero();switchProjTab('overview');}
 }
 function openSidebar(){document.getElementById("sidebar").classList.add("open");document.getElementById("sbOverlay").classList.add("open");}
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sbOverlay").classList.remove("open");}
@@ -1871,7 +2068,378 @@ function populateDropdowns(){
   document.getElementById("histFilter").innerHTML=`<option value="">All projects</option>`+projects.map(p=>`<option value="${p.id}">${p.name} — ${p.client_name}</option>`).join("");
 }
 
-function goToUpdate(id){nav("updates");document.getElementById("updProject").value=id;onProjSel();}
+function goToUpdate(id){openProjectDetail(id);}
+
+let curProjDetail=null,curProjTab="overview";
+
+function openProjectDetail(projId){
+  curProjDetail=projects.find(p=>p.id===projId);
+  if(!curProjDetail)return;
+  nav("project");
+}
+
+function renderProjectHero(){
+  const p=curProjDetail;
+  document.getElementById("pdBarTitle").textContent=p.name;
+  document.getElementById("pdHero").innerHTML=`
+    <div class="pd-hero-top">
+      <div style="flex:1;min-width:0;">
+        <div class="pd-hero-name">${p.name}</div>
+        <div class="pd-hero-meta">${p.client_name}${p.client_phone?" · "+p.client_phone:""}${p.address?" · "+p.address:""}</div>
+      </div>
+      <div>
+        <div class="pd-hero-pct">${p.progress||0}%</div>
+        <div class="pd-hero-pct-lbl">complete</div>
+      </div>
+    </div>
+    <div class="pd-prog"><div class="pd-prog-fill" style="width:0%;" id="pdProgFill"></div></div>`;
+  setTimeout(()=>{
+    const f=document.getElementById("pdProgFill");
+    if(f)f.style.width=(p.progress||0)+"%";
+  },80);
+}
+
+function switchProjTab(tab){
+  curProjTab=tab;
+  document.querySelectorAll(".pd-tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===tab));
+  const c=document.getElementById("pdContent");
+  c.innerHTML=`<div class="loading">Loading...</div>`;
+  if(tab==="overview")renderPdOverview();
+  else if(tab==="updates")renderPdUpdate();
+  else if(tab==="history")renderPdHistory();
+  else if(tab==="invoices")renderPdInvoices();
+  else if(tab==="portal")renderPdPortal();
+}
+
+function renderPdOverview(){
+  const p=curProjDetail;
+  const active=!!p.portal_active;
+  document.getElementById("pdContent").innerHTML=`
+    <div class="pd-actions">
+      <button class="pd-action-btn" onclick="switchProjTab('updates')">
+        <i class="bi bi-camera-fill"></i>
+        <span class="pd-action-label">Send Update</span>
+        <span class="pd-action-sub">WhatsApp progress to client</span>
+      </button>
+      <button class="pd-action-btn" onclick="switchProjTab('invoices')">
+        <i class="bi bi-receipt"></i>
+        <span class="pd-action-label">Invoices</span>
+        <span class="pd-action-sub">Create & track payments</span>
+      </button>
+      <button class="pd-action-btn" onclick="switchProjTab('portal')">
+        <i class="bi bi-globe"></i>
+        <span class="pd-action-label">Client Portal</span>
+        <span class="pd-action-sub">${active?"Active — share with client":"Enable client tracking"}</span>
+      </button>
+      <button class="pd-action-btn" onclick="switchProjTab('history')">
+        <i class="bi bi-clock-history"></i>
+        <span class="pd-action-label">History</span>
+        <span class="pd-action-sub">View all past updates</span>
+      </button>
+    </div>
+    <div id="pdOverviewHistory"><div class="loading">Loading recent updates...</div></div>`;
+  // Load recent history inline
+  fetch(`${SB_URL}/rest/v1/updates?project_id=eq.${p.id}&order=created_at.desc&limit=3`,{headers:SBH})
+    .then(r=>r.json()).then(data=>{
+      const el=document.getElementById("pdOverviewHistory");
+      if(!el)return;
+      if(!data||!data.length){
+        el.innerHTML=`<div class="empty"><p>No updates yet.<br/>Send your first site update to get started.</p></div>`;
+        return;
+      }
+      el.innerHTML=`<div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;">Recent Updates</div>`+
+        data.map(u=>{
+          const date=new Date(u.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short"});
+          return`<div class="upd-item stagger" style="cursor:default;">
+            <div class="upd-meta">${date} · ${u.progress}% complete</div>
+            <div class="upd-msg" style="max-height:60px;overflow:hidden;">${(u.generated_message||"").slice(0,120)}${(u.generated_message||"").length>120?"…":""}</div>
+          </div>`;
+        }).join("")+
+        `<button class="btn btn-ghost btn-sm" onclick="switchProjTab('history')" style="margin-top:8px;width:100%;justify-content:center;">View all updates →</button>`;
+    }).catch(()=>{});
+}
+
+async function renderPdUpdate(){
+  const p=curProjDetail;
+  document.getElementById("pdContent").innerHTML=`
+    <div style="margin-bottom:16px;">
+      <div class="sec-label" style="margin-top:0;">Site Update for ${p.name}</div>
+    </div>
+    <div class="fg"><label>What was completed today? <span style="color:var(--accent);">*</span></label>
+      <textarea id="pd-completed" placeholder="e.g. Tiling completed in master bathroom, kitchen cabinet installation started..." style="min-height:90px;"></textarea>
+    </div>
+    <div class="fg"><label>What are the next steps? <span style="color:var(--accent);">*</span></label>
+      <textarea id="pd-nextSteps" placeholder="e.g. Painting starts Monday, electrician scheduled for Tuesday..." style="min-height:90px;"></textarea>
+    </div>
+    <div class="fg"><label>Any delays or issues? <span style="color:var(--txt3);font-weight:400;">(optional)</span></label>
+      <textarea id="pd-issues" placeholder="e.g. Tile delivery delayed by 2 days..." style="min-height:60px;"></textarea>
+    </div>
+    <div class="g2">
+      <div class="fg"><label>Progress %</label>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <input type="range" id="pd-progress" min="0" max="100" step="5" value="${p.progress||0}" oninput="document.getElementById('pd-progval').textContent=this.value+'%'" style="flex:1;"/>
+          <span id="pd-progval" style="font-size:13px;font-weight:700;color:var(--accent);width:40px;">${p.progress||0}%</span>
+        </div>
+      </div>
+      <div class="fg"><label>Language</label>
+        <select id="pd-lang">
+          <option value="en">English</option>
+          <option value="ms">Bahasa Malaysia</option>
+          <option value="zh">中文</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>Site photos <span style="color:var(--txt3);font-weight:400;">(optional)</span></label>
+      <input type="file" id="pd-photos" accept="image/*" multiple style="font-size:12px;"/>
+      <div id="pd-photoThumb" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+    </div>
+    <div class="err" id="pd-err" style="display:none;"></div>
+    <div id="pd-result" style="display:none;margin:12px 0;background:var(--bg);border:1.5px solid var(--accent-border);border-radius:var(--radius-sm);padding:14px;font-size:13px;line-height:1.75;color:var(--txt2);white-space:pre-wrap;"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <button class="btn btn-primary" id="pd-genBtn" onclick="generatePdUpdate()" style="flex:1;justify-content:center;"><i class="bi bi-stars"></i> Generate Message</button>
+      <button class="btn btn-outline btn-sm" id="pd-copyBtn" onclick="copyPdResult()" style="display:none;"><i class="bi bi-clipboard"></i> Copy</button>
+      <button class="btn btn-ghost btn-sm" id="pd-waBtn" onclick="sharePdWA()" style="display:none;"><i class="bi bi-whatsapp"></i> WhatsApp</button>
+    </div>`;
+
+  // Wire photo preview
+  document.getElementById("pd-photos").addEventListener("change",function(){
+    const thumb=document.getElementById("pd-photoThumb");
+    thumb.innerHTML="";
+    Array.from(this.files).forEach(f=>{
+      const url=URL.createObjectURL(f);
+      thumb.innerHTML+=`<img src="${url}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);"/>`;
+    });
+  });
+}
+
+let pdUploadedPhotos=[];
+async function generatePdUpdate(){
+  const completed=document.getElementById("pd-completed").value.trim();
+  const nextSteps=document.getElementById("pd-nextSteps").value.trim();
+  const issues=document.getElementById("pd-issues").value.trim();
+  const progress=document.getElementById("pd-progress").value;
+  const lang=document.getElementById("pd-lang").value;
+  const err=document.getElementById("pd-err");
+  if(!completed||!nextSteps){err.textContent="Please fill in what was completed and next steps.";err.style.display="block";return;}
+  err.style.display="none";
+  const btn=document.getElementById("pd-genBtn");btn.textContent="Generating...";btn.disabled=true;
+
+  // Upload photos
+  pdUploadedPhotos=[];
+  const files=document.getElementById("pd-photos").files;
+  if(files.length){
+    for(const file of files){
+      try{
+        const fd=new FormData();fd.append("file",file);
+        const r=await fetch("/api/upload-photo",{method:"POST",body:fd});
+        const d=await r.json();
+        if(d.url)pdUploadedPhotos.push(d.url);
+      }catch(e){}
+    }
+  }
+
+  try{
+    const p=curProjDetail;
+    const r=await fetch("/api/update-generate",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({projectName:p.name,clientName:p.client_name,completed,nextSteps,issues,progress:parseInt(progress),language:lang,hasPhotos:pdUploadedPhotos.length>0})});
+    const d=await r.json();
+    if(d.error)throw new Error(d.error);
+
+    // Save update to Supabase
+    await fetch(`${SB_URL}/rest/v1/updates`,{method:"POST",headers:{...SBH,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify({project_id:p.id,completed,next_steps:nextSteps,issues,progress:parseInt(progress),language:lang,generated_message:d.message,photos:pdUploadedPhotos})});
+    // Update project progress
+    await fetch(`${SB_URL}/rest/v1/projects?id=eq.${p.id}`,{method:"PATCH",headers:{...SBH,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify({progress:parseInt(progress)})});
+    curProjDetail.progress=parseInt(progress);
+    renderProjectHero();
+
+    document.getElementById("pd-result").textContent=d.message;
+    document.getElementById("pd-result").style.display="block";
+    document.getElementById("pd-copyBtn").style.display="inline-flex";
+    document.getElementById("pd-waBtn").style.display="inline-flex";
+    btn.innerHTML='<i class="bi bi-arrow-repeat"></i> Regenerate';btn.disabled=false;
+    await loadProjects();
+  }catch(e){
+    err.textContent="Error: "+e.message;err.style.display="block";
+    btn.innerHTML='<i class="bi bi-stars"></i> Generate Message';btn.disabled=false;
+  }
+}
+
+function copyPdResult(){
+  const txt=document.getElementById("pd-result").textContent;
+  navigator.clipboard.writeText(txt).then(()=>showToast("Copied to clipboard","success"));
+}
+function sharePdWA(){
+  const txt=document.getElementById("pd-result").textContent;
+  const p=curProjDetail;
+  const ph=(p.client_phone||"").replace(/[^0-9]/g,"");
+  const intl=ph.startsWith("0")?"6"+ph:ph;
+  window.open(`https://wa.me/${intl}?text=${encodeURIComponent(txt)}`,"_blank");
+}
+
+async function renderPdHistory(){
+  const p=curProjDetail;
+  document.getElementById("pdContent").innerHTML=`<div class="loading">Loading history...</div>`;
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/updates?project_id=eq.${p.id}&order=created_at.desc`,{headers:SBH});
+    const data=await r.json();
+    if(!data.length){
+      document.getElementById("pdContent").innerHTML=`<div class="empty"><p>No updates yet for this project.</p></div>`;
+      return;
+    }
+    document.getElementById("pdContent").innerHTML=data.map((u,i)=>{
+      const date=new Date(u.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+      const photos=(u.photos||[]).map(url=>`<img src="${url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1.5px solid var(--border);cursor:pointer;" onclick="openLightbox('${url}')" loading="lazy"/>`).join("");
+      return`<div class="upd-item stagger" style="animation-delay:${i*40}ms;">
+        <div class="upd-meta">${date}</div>
+        <div class="upd-prog">${u.progress}% complete</div>
+        <div class="upd-msg">${u.generated_message||""}</div>
+        ${photos?`<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px;">${photos}</div>`:""}
+        <div style="margin-top:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(${JSON.stringify(u.generated_message||'')}).then(()=>showToast('Copied','success'))"><i class="bi bi-clipboard"></i> Copy</button>
+        </div>
+      </div>`;
+    }).join("");
+  }catch(e){document.getElementById("pdContent").innerHTML=`<div class="empty"><p>Failed to load history.</p></div>`;}
+}
+
+async function renderPdInvoices(){
+  const p=curProjDetail;
+  curInvProject={id:p.id,name:p.name,client_name:p.client_name,client_phone:p.client_phone,address:p.address};
+  document.getElementById("pdContent").innerHTML=`
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn btn-primary btn-sm" onclick="openNewInvoice('${p.id}','${(p.name||"").replace(/'/g,"\\'")}','${(p.client_name||"").replace(/'/g,"\\'")}','${(p.client_phone||"").replace(/'/g,"\\'")}','${(p.address||"").replace(/'/g,"\\'")}')"><i class="bi bi-plus-lg"></i> New Invoice</button>
+    </div>
+    <div id="pdInvList"><div class="loading">Loading invoices...</div></div>`;
+  try{
+    const r=await fetch(`/api/invoices?project_id=${p.id}`);
+    const invs=await r.json();
+    const el=document.getElementById("pdInvList");
+    if(!el)return;
+    if(!invs.length){el.innerHTML=`<div class="empty"><p>No invoices yet.<br/>Create your first invoice above.</p></div>`;return;}
+    el.innerHTML=invs.map(inv=>{
+      const status=getInvStatus(inv);
+      const date=new Date(inv.created_at).toLocaleDateString("en-MY",{day:"numeric",month:"short"});
+      return`<div class="inv-row" onclick="openInvDetail('${inv.id}')">
+        <div class="inv-row-info">
+          <div class="inv-row-num">${inv.invoice_number}</div>
+          <div class="inv-row-title">${inv.title}</div>
+          <div class="inv-row-date">${date}${inv.due_date?" · Due "+inv.due_date:""}</div>
+        </div>
+        <div class="inv-row-right">
+          <div class="inv-row-amount">RM ${Number(inv.total||0).toLocaleString("en-MY",{minimumFractionDigits:2})}</div>
+          <div class="inv-status ${status}">${status.toUpperCase()}</div>
+        </div>
+      </div>`;
+    }).join("");
+    invs.forEach(inv=>{allInvoices[inv.id]=inv;});
+  }catch(e){}
+}
+
+function renderPdPortal(){
+  const p=curProjDetail;
+  const active=!!p.portal_active;
+  const lang=p.portal_language||"en";
+  const portalUrl=`${window.location.origin}/portal.html?id=${p.id}`;
+  document.getElementById("pdContent").innerHTML=`
+    <div class="card" style="padding:18px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:2px;">Client Portal</div>
+          <div style="font-size:12px;color:var(--txt2);">Share a live progress page with your client</div>
+        </div>
+        <span class="inv-status ${active?"sent":"draft"}" style="padding:5px 12px;">${active?"Active":"Inactive"}</span>
+      </div>
+      ${active?`
+        <div style="background:var(--bg);border:1.5px solid var(--accent-border);border-radius:var(--radius-sm);padding:10px 13px;margin-bottom:14px;">
+          <div style="font-size:10px;color:var(--txt3);font-weight:600;margin-bottom:4px;">PORTAL LINK</div>
+          <div style="font-size:11px;color:var(--accent);word-break:break-all;">${portalUrl}</div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;color:var(--txt3);font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;">Portal Language</div>
+          <div style="display:flex;gap:6px;">
+            <button class="plang ${lang==="en"?"on":""}" onclick="setPortalLang('${p.id}','en');curProjDetail.portal_language='en';renderPdPortal();">English</button>
+            <button class="plang ${lang==="ms"?"on":""}" onclick="setPortalLang('${p.id}','ms');curProjDetail.portal_language='ms';renderPdPortal();">Bahasa Malaysia</button>
+            <button class="plang ${lang==="zh"?"on":""}" onclick="setPortalLang('${p.id}','zh');curProjDetail.portal_language='zh';renderPdPortal();">中文</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText('${portalUrl}').then(()=>showToast('Portal link copied','success'))"><i class="bi bi-link-45deg"></i> Copy Link</button>
+          <button class="btn btn-outline btn-sm" onclick="sharePortalWA('${p.id}','${(p.client_name||"").replace(/'/g,"\\'")}','${p.client_phone||""}')"><i class="bi bi-whatsapp"></i> Share on WhatsApp</button>
+          <button class="btn btn-ghost btn-sm" onclick="window.open('${portalUrl}','_blank')"><i class="bi bi-box-arrow-up-right"></i> Preview</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--txt3);" onclick="togglePortal('${p.id}',false);curProjDetail.portal_active=false;renderPdPortal();renderProjectHero();">Deactivate</button>
+        </div>
+      `:`
+        <p style="font-size:13px;color:var(--txt2);margin-bottom:16px;line-height:1.65;">Enable the client portal to give your client a live progress page. They'll see the progress bar, timeline, and all site photos — without needing to log in.</p>
+        <button class="btn btn-primary" onclick="togglePortal('${p.id}',true);curProjDetail.portal_active=true;renderPdPortal();renderProjectHero();" style="width:100%;justify-content:center;"><i class="bi bi-globe"></i> Enable Client Portal</button>
+      `}
+    </div>`;
+}
+
+// Dashboard action feed
+async function renderActionFeed(){
+  const el=document.getElementById("actionFeed");
+  if(!el)return;
+  const items=[];
+
+  // Hot/warm leads
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/leads?status=eq.new&order=created_at.desc&limit=3`,{headers:SBH});
+    const leads=await r.json()||[];
+    const hot=leads.filter(l=>l.score==="HOT");
+    const warm=leads.filter(l=>l.score==="WARM");
+    if(hot.length)items.push({type:"urgent",title:`${hot.length} hot lead${hot.length>1?"s":""} waiting`,sub:hot.map(l=>l.name).join(", "),action:()=>nav("leads")});
+    else if(warm.length)items.push({type:"warn",title:`${warm.length} warm lead${warm.length>1?"s":""} to follow up`,sub:warm.map(l=>l.name).join(", "),action:()=>nav("leads")});
+  }catch(e){}
+
+  // Projects needing update
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/updates?order=created_at.desc`,{headers:SBH});
+    const updates=await r.json()||[];
+    const lastByProj={};
+    updates.forEach(u=>{if(!lastByProj[u.project_id])lastByProj[u.project_id]=u.created_at;});
+    const stale=projects.filter(p=>{
+      if(!p.id||(p.progress||0)>=100)return false;
+      const last=lastByProj[p.id];
+      if(!last)return true;
+      return(new Date()-new Date(last))>4*24*3600*1000;
+    });
+    if(stale.length)items.push({type:"warn",title:`${stale.length} project${stale.length>1?"s":""} need an update`,sub:stale.slice(0,2).map(p=>p.name).join(", "),action:()=>nav("projects")});
+  }catch(e){}
+
+  // Overdue invoices
+  try{
+    const r=await fetch(`/api/invoices?project_id=${projects.map(p=>p.id).join(",")}`);
+    const invs=(await r.json())||[];
+    const overdue=invs.filter(i=>getInvStatus(i)==="overdue");
+    if(overdue.length){
+      const total=overdue.reduce((s,i)=>s+Number(i.total||0),0);
+      items.push({type:"urgent",title:`RM ${total.toLocaleString("en-MY",{minimumFractionDigits:2})} overdue`,sub:`${overdue.length} invoice${overdue.length>1?"s":""} past due date`,action:()=>nav("projects")});
+    }
+  }catch(e){}
+
+  if(!items.length){
+    el.innerHTML=`<div style="font-size:12px;color:var(--txt3);padding:12px 0;">All caught up — nothing urgent right now.</div>`;
+    return;
+  }
+
+  el.innerHTML=items.map(item=>`
+    <div class="action-item ${item.type}" onclick="(${item.action.toString()})()">
+      <div class="action-dot ${item.type}"></div>
+      <div class="action-body">
+        <div class="action-title">${item.title}</div>
+        <div class="action-sub">${item.sub}</div>
+      </div>
+      <i class="bi bi-chevron-right action-arrow"></i>
+    </div>`).join("");
+}
+
+// FAB
+let fabOpen=false;
+function toggleFab(){fabOpen=!fabOpen;document.getElementById("fabMenu").classList.toggle("open",fabOpen);document.getElementById("fabBtn").classList.toggle("open",fabOpen);}
+function closeFab(){fabOpen=false;document.getElementById("fabMenu").classList.remove("open");document.getElementById("fabBtn").classList.remove("open");}
+document.addEventListener("click",e=>{if(fabOpen&&!e.target.closest(".fab"))closeFab();});
 function openAddProj(){document.getElementById("addProjModal").classList.add("open");}
 function closeAddProj(){document.getElementById("addProjModal").classList.remove("open");["npName","npClient","npPhone","npAddr"].forEach(id=>document.getElementById(id).value="");document.getElementById("npErr").style.display="none";}
 
@@ -2120,22 +2688,34 @@ function renderDashboard(){
   document.getElementById("dash-total").textContent = total;
   document.getElementById("dash-active").textContent = active;
   document.getElementById("dash-progress").textContent = avg + "%";
-  document.getElementById("dash-proposals").textContent = sessionProposals;
   document.getElementById("sb-proj-count").textContent = total;
   document.getElementById("sb-avg-prog").textContent = avg + "%";
 
-  // Animate counters
+  // Update leads stat
+  fetch(`${SB_URL}/rest/v1/leads?status=eq.new&select=id`,{headers:SBH})
+    .then(r=>r.json()).then(d=>{
+      const el=document.getElementById("dash-leads");
+      if(el){el.textContent=d.length||0;animateCount(el,d.length||0);}
+    }).catch(()=>{});
+
   animateCount(document.getElementById("dash-active"), active);
   animateCount(document.getElementById("dash-total"), total);
   animateCount(document.getElementById("dash-progress"), avg, "%");
-  animateCount(document.getElementById("dash-proposals"), sessionProposals);
 
   const el = document.getElementById("dash-recent");
   if(!projects.length){
-    el.innerHTML = "<div class=\"empty\"><div class=\"empty-icon\"><i class=\"bi bi-buildings\" style=\"color:var(--border2);font-size:32px;\"></i></div><p>No projects yet — add your first one</p></div>";
+    el.innerHTML = `<div class="empty"><div class="empty-icon"><i class="bi bi-buildings" style="color:var(--border2);font-size:32px;"></i></div><p>No projects yet — add your first one</p></div>`;
     return;
   }
-  el.innerHTML = projects.slice(0,5).map(p => "<div class=\"dash-proj-row\" onclick=\"goToUpdate('"+p.id+"')\"><div><div class=\"dash-proj-name\">"+p.name+"</div><div class=\"dash-proj-client\">"+p.client_name+(p.address?" &middot; "+p.address:"")+"</div></div><div class=\"dash-prog\"><div class=\"dash-prog-track\"><div class=\"dash-prog-fill\" style=\"width:"+(p.progress||0)+"%\"></div></div><span class=\"dash-prog-num\">"+(p.progress||0)+"%</span></div></div>").join("");
+  el.innerHTML = projects.slice(0,5).map(p =>
+    `<div class="dash-proj-row" onclick="openProjectDetail('${p.id}')">
+      <div><div class="dash-proj-name">${p.name}</div><div class="dash-proj-client">${p.client_name}${p.address?" · "+p.address:""}</div></div>
+      <div class="dash-prog">
+        <div class="dash-prog-track"><div class="dash-prog-fill" style="width:${p.progress||0}%"></div></div>
+        <span class="dash-prog-num">${p.progress||0}%</span>
+      </div>
+    </div>`
+  ).join("");
   staggerIn(".dash-proj-row", el);
   initSpotlight();
 }
