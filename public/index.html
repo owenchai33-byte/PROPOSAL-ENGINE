@@ -718,7 +718,7 @@ input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--bor
 <div id="toast"></div>
 
 <!-- PASSWORD -->
-<div id="pw">
+<div id="pw" style="display:none;">
   <div class="pw-wrap">
     <div class="pw-logo-mark"><span>M</span></div>
     <h2>Mushi OS</h2>
@@ -1281,19 +1281,9 @@ async function checkPw(){
     else{document.getElementById("pwErr").style.display="block";btn.textContent="Enter";btn.disabled=false;document.getElementById("pwIn").value="";}
   }catch(e){document.getElementById("pwErr").textContent="Error. Try again.";document.getElementById("pwErr").style.display="block";btn.textContent="Enter";btn.disabled=false;}
 }
-if(sessionStorage.getItem("authed")==="1"){
-  document.getElementById("pw").style.display="none";
-  document.getElementById("app").style.display="block";
-  // DOMContentLoaded already fired — call init directly
-  init();
-}
-
-// Robust Enter key handler for password field — covers keydown + keyup
-["keydown","keyup"].forEach(evt=>{
-  document.getElementById("pwIn").addEventListener(evt,function(e){
-    if(e.key==="Enter"||e.keyCode===13){e.preventDefault();checkPw();}
-  });
-});
+// No password required — show app directly
+document.getElementById("app").style.display="block";
+init();
 
 // ═══════════════════════════════════════
 // NAVIGATION
