@@ -1,4 +1,4 @@
-const MODELS = [
+const GEMINI_MODELS = [
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
   "gemini-2.5-flash",
@@ -7,13 +7,14 @@ const MODELS = [
 ];
 
 async function callGemini(apiKey, model, prompt) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const version = model.includes("1.5") ? "v1" : "v1beta";
+  const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${apiKey}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.5, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.6, maxOutputTokens: 1024 },
     }),
   });
   const data = await res.json();
@@ -23,32 +24,59 @@ async function callGemini(apiKey, model, prompt) {
   return raw;
 }
 
-function shouldTryNext(errMsg) {
-  const m = errMsg.toLowerCase();
-  return (
-    m.includes("quota") || m.includes("rate limit") || m.includes("resource_exhausted") ||
-    m.includes("429") || m.includes("503") || m.includes("overloaded") ||
-    m.includes("unavailable") || m.includes("high demand") ||
-    m.includes("not found") || m.includes("not support") || m.includes("404")
-  );
+async function callGroq(apiKey, prompt) {
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.6,
+      max_tokens: 1024,
+    }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message || "Groq error");
+  const raw = data?.choices?.[0]?.message?.content || "";
+  if (!raw) throw new Error("Empty response from Groq");
+  return raw;
 }
 
-async function callWithRetry(apiKey, prompt) {
-  let lastError;
-  for (const model of MODELS) {
+function isQuotaError(msg) {
+  const m = (msg || "").toLowerCase();
+  return m.includes("quota") || m.includes("rate limit") || m.includes("resource_exhausted") ||
+    m.includes("429") || m.includes("503") || m.includes("overloaded") ||
+    m.includes("unavailable") || m.includes("not found") || m.includes("not support");
+}
+
+async function callWithRetry(geminiKey, groqKey, prompt) {
+  for (const model of GEMINI_MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        return await callGemini(apiKey, model, prompt);
+        return await callGemini(geminiKey, model, prompt);
       } catch (err) {
-        lastError = err;
-        const retryable = err.message?.toLowerCase().includes("overloaded") || err.message?.toLowerCase().includes("503");
+        const retryable = (err.message || "").toLowerCase().includes("overloaded");
         if (retryable && attempt < 2) { await new Promise(r => setTimeout(r, 2000)); continue; }
-        if (shouldTryNext(err.message || "")) break;
+        if (isQuotaError(err.message)) break;
         throw err;
       }
     }
   }
-  throw new Error("AI service is temporarily busy. Please wait a few seconds and try again.");
+
+  // Groq fallback
+  if (groqKey) {
+    try {
+      console.log("Gemini quota exhausted — falling back to Groq");
+      return await callGroq(groqKey, prompt);
+    } catch (err) {
+      console.error("Groq fallback failed:", err.message);
+    }
+  }
+
+  throw new Error("AI service is temporarily unavailable. Please try again in a few minutes.");
 }
 
 module.exports = async (req, res) => {
@@ -90,14 +118,12 @@ FORMAT RULES:
 - Use ✅ for completed work — list ALL items from "COMPLETED TODAY", one per line
 - Use 🔨 for next steps — list ALL items from "NEXT STEPS", one per line
 - Use ⚠️ for delays or issues — include if there are any
-- ${hasPhotos ? "Use 📷 for the photo line" : ""}
 - End with a short reassuring closing line
 - Write naturally in ${langName}, not word-for-word translation
-- Do NOT summarize or shorten the completed work or next steps — use everything provided`;
+- Do NOT summarize or shorten — use everything provided`;
 
   try {
-    const message = await callWithRetry(process.env.GEMINI_API_KEY, prompt);
-    // Append photo line if not already included by AI
+    const message = await callWithRetry(process.env.GEMINI_API_KEY, process.env.GROQ_API_KEY, prompt);
     const finalMessage = hasPhotos && !message.includes("📷")
       ? message.trim() + "\n\n" + photoLine
       : message;
